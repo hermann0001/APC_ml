@@ -3,9 +3,9 @@ import pandas as pd
 import numpy as np
 
 SAMPLE_SIZE = 100000 # no. of rows loaded (total = 1M)
-CSV = "temp/combined_playlists.csv" 
+HDF = "temp/dataframe.h5" 
 
-df = pd.read_csv(CSV, nrows=SAMPLE_SIZE)
+df = pd.read_hdf(HDF) #nrows=SAMPLE_SIZE)
 
 
 # Split into initial training+validation and test sets
