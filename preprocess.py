@@ -31,8 +31,14 @@ tracks_df = tracks_df.rename(columns={'duration_ms':'track_duration_ms'})
 dataframe = tracks_df.merge(playlists_df, on='pid', how='left')
 
 
+
 print("Original DataFrame")
 print(dataframe.memory_usage().sum())
+
+# Scale ms in seconds
+dataframe['playlist_duration_mins'] = dataframe['playlist_duration_ms'] / 60000  
+dataframe['track_duration_s'] = dataframe['track_duration_ms'] / 1000
+print(dataframe['track_duration_s'])
 
 # Convert into smaller data types
 dataframe['pid'] = pd.to_numeric(dataframe['pid'], downcast='integer')
@@ -42,16 +48,22 @@ dataframe['num_followers'] = pd.to_numeric(dataframe['num_followers'], downcast=
 dataframe['num_edits'] = pd.to_numeric(dataframe['num_edits'], downcast='integer')
 dataframe['modified_at'] = pd.to_datetime(dataframe['modified_at'], unit='s')
 dataframe['num_artists'] = pd.to_numeric(dataframe['num_artists'], downcast='integer')
+dataframe['playlist_duration_mins'] = pd.to_numeric(dataframe['playlist_duration_mins'], downcast='float')
+dataframe['track_duration_s'] = pd.to_numeric(dataframe['track_duration_s'], downcast='float')
+
+# Extract id from uris
 dataframe['track_uri'] = dataframe['track_uri'].apply(extract_uri)
 dataframe['artist_uri'] = dataframe['artist_uri'].apply(extract_uri)
 dataframe['album_uri'] = dataframe['album_uri'].apply(extract_uri)
+# Normalize text fields
 dataframe['normalized_playlist_title'] = dataframe['name'].apply(normalize_name)
-dataframe['playlist_duration_s'] = dataframe['playlist_duration_ms'] / 1000
-dataframe['track_duration_s'] = dataframe['track_duration_ms'] / 1000
 
-
+dataframe.dropna(subset=['artist_name', 'track_name', 'album_name'], inplace=True)
+dataframe.drop(columns=['description'], inplace=True)
 print("Dropped DataFrame")
 print(dataframe.memory_usage().sum())
+
+print(dataframe.info())
 
 # Save the dataframe in high performance dataframe on disk
 dataframe.to_hdf('temp/dataframe.h5', key='dataframe', mode='w')
@@ -106,29 +118,91 @@ dataframe = dataframe.drop('name', axis=1)
 
 # Distribution of number of tracks in playlists
 plt.figure(figsize=(10, 6))
-sns.histplot(dataframe['num_tracks'], kde=True)
+sns.histplot(dataframe['num_tracks'], bins=50, kde=True)
 plt.title('Distribution of Number of Tracks in Playlists')
 plt.xlabel('Number of Tracks')
 plt.ylabel('Frequency')
-plt.savefig('./fig1.png')  # Adjust path as needed
+plt.savefig('./tracks_in_playlists.png')  
 
 # Distribution of number of artists in playlists
 plt.figure(figsize=(10, 6))
-sns.histplot(dataframe['num_artists'], kde=True)
+sns.histplot(dataframe['num_artists'], bins=50, kde=True)
 plt.title('Distribution of Number of Artists in Playlists')
 plt.xlabel('Number of Artists')
 plt.ylabel('Frequency')
-plt.savefig('./fig2.png')  # Adjust path as needed
+plt.savefig('./artists_in_playlists.png')  
 
 # Un box plot (o box-and-whisker plot) mostra la distribuzione dei dati
 # quantitativi.
 
-# Il grafo mostra i quartili del set di dati, mentre i whiskers (baffi)
-# si estendono  per mostrare il resto della distribuzione, ad eccezione dei
-# punti che sono stati determinati come "outlier" poiché si allontanano oltre
-# 1,5*IQR verso sx o verso dx.
+plt.figure(figsize=(10, 6))
+sns.boxplot(data=dataframe, x = dataframe['playlist_duration_mins'])
+plt.xlabel('Playlist duration (sec)')
+plt.savefig('./playlist_duration_boxplot.png')  
+
+mean = dataframe['playlist_duration_mins'].mean()
+std = dataframe['playlist_duration_mins'].std()
+lower_cut, upper_cut = mean -2 * std , mean +2 * std
+dataframe = dataframe[(dataframe['playlist_duration_mins'] > lower_cut) & (dataframe['playlist_duration_mins'] < upper_cut)]
 
 plt.figure(figsize=(10, 6))
-sns.boxplot(data=dataframe, x = dataframe['playlist_duration_s'])
-plt.xlabel('Playlist duration (sec)')
-plt.savefig('./fig3.png')  # Adjust path as needed
+
+plt.subplot(1,3,1)
+sns.violinplot(data=dataframe, x = dataframe['playlist_duration_mins'])
+plt.xlabel('Playlist duration (minutes)')
+plt.title('Violin Plot of Playlist Duration')
+
+
+plt.subplot(1,3,2)
+sns.histplot(data=dataframe, x = dataframe['playlist_duration_mins'], bins=50)
+plt.xlabel('Playlist duration (minutes)')
+plt.title('Histogram of Playlist Duration')
+
+plt.subplot(1,3,3)
+sns.boxplot(data=dataframe, x = dataframe['playlist_duration_mins'])
+plt.xlabel('Playlist duration (minutes)')
+plt.title('Box plot of Playlist Duration')
+
+plt.savefig('after_playlist_duration_shrink.png')  
+
+
+
+
+plt.figure(figsize=(10, 6))
+sns.boxplot(data=dataframe, x = dataframe['track_duration_s'])
+plt.xlabel('track duration (sec)')
+plt.savefig('./track_duration_box.png')  
+
+mean = dataframe['track_duration_s'].mean()
+std = dataframe['track_duration_s'].std()
+
+print(f"mean: {mean}, std: {std}")
+print(dataframe.shape)
+lower_cut, upper_cut = mean -2 * std , mean +2 * std
+dataframe = dataframe[(dataframe['track_duration_s'] > lower_cut) & (dataframe['track_duration_s'] < upper_cut)]
+print(dataframe.shape)
+
+
+dataframe['zscore'] = (dataframe['track_duration_s'] - dataframe['track_duration_s'].mean()) / std
+dataframe = dataframe[(dataframe.zscore > -2) & (dataframe.zscore < 2)]
+print(dataframe.shape)
+
+plt.figure(figsize=(10, 6))
+
+plt.subplot(1,3,1)
+sns.violinplot(data=dataframe, x = dataframe['track_duration_s'])
+plt.xlabel('Track duration (seconds)')
+plt.title('Violin Plot of Track Duration')
+
+
+plt.subplot(1,3,2)
+sns.histplot(data=dataframe, x = dataframe['track_duration_s'], bins=50)
+plt.xlabel('Track duration (seconds)')
+plt.title('Histogram of Track Duration')
+
+plt.subplot(1,3,3)
+sns.boxplot(data=dataframe, x = dataframe['track_duration_s'])
+plt.xlabel('Track duration (seconds)')
+plt.title('Box plot of Track Duration')
+
+plt.savefig('after_Track_duration_shrink.png')  
