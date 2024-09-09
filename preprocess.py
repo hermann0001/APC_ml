@@ -38,7 +38,6 @@ print(dataframe.memory_usage().sum())
 # Scale ms in seconds
 dataframe['playlist_duration_mins'] = dataframe['playlist_duration_ms'] / 60000  
 dataframe['track_duration_s'] = dataframe['track_duration_ms'] / 1000
-print(dataframe['track_duration_s'])
 
 # Convert into smaller data types
 dataframe['pid'] = pd.to_numeric(dataframe['pid'], downcast='integer')
