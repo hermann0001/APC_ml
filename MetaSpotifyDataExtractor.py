@@ -21,8 +21,8 @@ def get_access_token(client_id, client_secret):
         return None
 
 # Utilizzo:
-client_id = '***'
-client_secret = '***'
+client_id = ''
+client_secret = ''
 token = get_access_token(client_id, client_secret)
 
 if token:
@@ -43,7 +43,7 @@ def get_tracks(access_token, track):
         return None
 
 # Utilizzo:
-track_id = '11dFghVXANMlKmJXsNCbNl'
+track_id = ''
 tracks = get_tracks(token, track_id)
 
 if tracks:

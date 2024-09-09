@@ -8,6 +8,7 @@ SRC_FOLDER = "challenge_set/"
 TARGET_FOLDER = "formatted/challenge_set/"
 # files
 TEST_FILE = "challenge_set.json"
+PLAYLISTS_FILE = "playlists.csv"
 ARTISTS_FILE = "artists.csv"
 TRACKS_FILE = "tracks.csv"
 PLAYLISTS_TRACKS_FILE = "playlists_tracks.csv"
