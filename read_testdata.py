@@ -1,6 +1,7 @@
 import pandas as pd
 import json
 import os
+from utils import *
 
 # data folder
 META_SRC_FOLDER = "formatted/dataset/"
@@ -37,19 +38,28 @@ if __name__ == '__main__':
     playlists_df.columns = ['playlist_id', 'name', 'num_tracks', 'num_samples', 'num_holdouts']
 
     # Explode tracks field
-    tracks_df = playlists_challenge_df[['pid', 'tracks']].explode('tracks').reset_index(drop=True)
-    tracks_df = pd.json_normalize(tracks_df['tracks'])
+    df_exploded = playlists_challenge_df[['pid', 'tracks']].explode('tracks').reset_index(drop=True)
+    df_filtered = df_exploded[pd.notna(df_exploded['tracks'])].copy()
+    df_filtered['artist_uri'] = df_filtered['tracks'].apply(lambda x: x['artist_uri'])
+    df_filtered['track_uri'] = df_filtered['tracks'].apply(lambda x: x['track_uri'])
+    df_filtered['pos'] = df_filtered['tracks'].apply(lambda x: x['pos'])
 
-    print(playlists_challenge_df.head())
-
-
+    # Simplify URIs
+    df_filtered['artist_uri'] = df_filtered['artist_uri'].apply(extract_id_from_uri)
+    df_filtered['track_uri'] = df_filtered['track_uri'].apply(extract_id_from_uri)
+    
     # map URIs to IDs
-    tracks_df['artist_id'] = tracks_df['artist_uri'].map(artistmap['artist_id'])
-    tracks_df['track_id'] = tracks_df['track_uri'].map(trackmap['track_id'])
+    df_filtered['artist_id'] = df_filtered['artist_uri'].map(artistmap['artist_id'])
+    df_filtered['track_id'] = df_filtered['track_uri'].map(trackmap['track_id'])
+
 
     # Create playlists_track DataFrame
-    playlists_tracks_df = tracks_df[['pid', 'track_id', 'artist_id', 'pos']].rename(columns={'pid': 'playlist_id'}).reset_index(drop=True)
+    playlists_tracks_df = df_filtered[['pid', 'track_id', 'artist_id', 'pos']].rename(columns={'pid': 'playlist_id'}).reset_index(drop=True)
+
 
     # Save csv
     playlists_df.to_csv(os.path.join(TARGET_FOLDER, PLAYLISTS_FILE), index=False)
     playlists_tracks_df.to_csv(os.path.join(TARGET_FOLDER, PLAYLISTS_TRACKS_FILE), index=False)
+
+    # check csv
+    check_csv(os.path.join(TARGET_FOLDER, PLAYLISTS_FILE), 10000, id_column="playlist_id")
