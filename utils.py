@@ -5,6 +5,9 @@ def extract_id_from_uri(uri):
     """ Extract the ID from a URI string. """
     return uri.split(':')[-1]
 
+def reconstruct_uri(uri):
+    return "spotify:track:" + uri
+
 def check_csv(file_path, expected_rows, id_column=None):
     """
     Check if a CSV file exists, is non-empty, and optionally validate the presence of an ID column.

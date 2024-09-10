@@ -1,5 +1,14 @@
 #little scripts for meta dati of spotify tracks
 import requests # type: ignore
+import spotipy as sp
+import pandas as pd
+import os
+from utils import reconstruct_uri
+
+CLIENT_ID = ''
+CLIENT_SECRET = ''
+SRC_FOLDER = 'formatted/dataset/'
+TRACKS_CSV = 'tracks.csv'
 
 def get_access_token(client_id, client_secret):
     url = 'https://accounts.spotify.com/api/token'
@@ -21,12 +30,7 @@ def get_access_token(client_id, client_secret):
         return None
 
 # Utilizzo:
-client_id = ''
-client_secret = ''
-token = get_access_token(client_id, client_secret)
 
-if token:
-    print(f"Access Token: {token}")
 
 def get_tracks(access_token, track):
     url = 'https://api.spotify.com/v1/audio-features/' + track
@@ -42,9 +46,22 @@ def get_tracks(access_token, track):
         print(f"Error: {response.status_code}, {response.text}")
         return None
 
-# Utilizzo:
-track_id = ''
-tracks = get_tracks(token, track_id)
 
-if tracks:
-    print(tracks)
+if __name__ == '__main__':
+    
+    # token = get_access_token(CLIENT_ID, CLIENT_SECRET)
+
+    # if token:
+    #     print(f"Access Token: {token}")
+
+    # track_id = ''
+    # tracks = get_tracks(token, track_id)
+
+    # if tracks:
+    #     print(tracks)
+    
+    tracks_data = pd.read_csv(os.path.join(SRC_FOLDER, TRACKS_CSV), usecols=['track_uri'])
+    tracks_data['track_id'] = tracks_data['track_uri']
+    tracks_data['track_uri'] = tracks_data['track_uri'].apply(reconstruct_uri)
+    tracks_data.drop_duplicates(inplace=True)
+    print(tracks_data.head())
