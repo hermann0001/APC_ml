@@ -38,10 +38,10 @@ pip3 install -r requirements.txt
  ┗ 📜utils.py
 ```
 
-* **[dataset](/dataset/)** è la cartella destinata a contenere il dataset estratto direttamente dentro di essa.
-* **[challenge_set](/challenge_set/)** è la cartella destinata a contenere il dataset di test fornito dalla challenge, anch'esso da estrarre direttamente dentro la cartella.
-* **[figures](/figures/)** contiene vari grafici o qualsiasi file `.png` generato dal codice.
-* **[formatted](/formatted/)** contiene i vari dataset convertiti e allegeriti in file `.csv` generati e preprocessati dal codice python.
+* **dataset** è la cartella destinata a contenere il dataset estratto direttamente dentro di essa.
+* **challenge_set** è la cartella destinata a contenere il dataset di test fornito dalla challenge, anch'esso da estrarre direttamente dentro la cartella.
+* **figures** contiene vari grafici o qualsiasi file `.png` generato dal codice.
+* **formatted** contiene i vari dataset convertiti e allegeriti in file `.csv` generati e preprocessati dal codice python.
 
 ## Lettura e preprocessamento dei dati
 
