@@ -1,8 +1,8 @@
-category_encoders==2.6.3
+gensim==4.3.3
 matplotlib==3.9.2
 numpy==2.1.1
-pandas==2.2.2
+pandas==2.2.3
 Requests==2.32.3
-scikit_learn==1.5.1
+scikit_learn==1.5.2
 seaborn==0.13.2
 spotipy==2.24.0
