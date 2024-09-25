@@ -6,8 +6,8 @@ from utils import reconstruct_uri
 import argparse
 import sys
 
-CLIENT_ID = ''
-CLIENT_SECRET = ''
+CLIENT_ID = '***'
+CLIENT_SECRET = '***'
 SRC_FOLDER = 'formatted/dataset/'
 TRACKS_CSV = 'tracks.csv'
 
