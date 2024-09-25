@@ -9,9 +9,11 @@ import pandas as pd
 import json
 from collections import defaultdict
 from utils import *
+
 # folders
 SRC_FOLDER = "dataset/data/"
 TARGET_FODLER = "formatted/dataset/"
+
 # files
 PLAYLISTS_FILE = TARGET_FODLER + "playlists.csv"
 TRACKS_FILE = TARGET_FODLER + "tracks.csv"
@@ -26,6 +28,8 @@ artist_id_map = defaultdict(lambda: None)
 track_id_map = defaultdict(lambda: None)
 artist_id_counter = [0]                     # Using list to maintain a mutable counter
 track_id_counter = [0]
+written_track_uris = set()
+written_artist_uris = set()
 
 def getid(uri, uri_map, counter):
     """
@@ -98,6 +102,14 @@ def process_dataset_batch(file_batch):
         df_exploded['artist_uri'] = df_exploded['artist_uri'].apply(extract_id_from_uri)
         df_exploded['track_uri'] = df_exploded['track_uri'].apply(extract_id_from_uri)
         df_exploded['album_uri'] = df_exploded['album_uri'].apply(extract_id_from_uri)
+
+        # Filter out already processed tracks using track_uri
+        df_exploded = df_exploded[~df_exploded['track_uri'].isin(written_track_uris)]
+        df_exploded = df_exploded[~df_exploded['artist_uri'].isin(written_artist_uris)]
+
+        # Update the global set with new track URIs
+        written_track_uris.update(df_exploded['track_uri'].tolist())
+        written_artist_uris.update(df_exploded['artist_uri'].tolist())
 
         # Create Dataframes
         artists_df = df_exploded[['artist_id', 'artist_uri', 'artist_name']].drop_duplicates().reset_index(drop=True)

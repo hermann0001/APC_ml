@@ -88,4 +88,3 @@ I primi due script renderanno disponibili i seguenti file `.csv`:
     ```text
     playlist_id | track_id | artist_id | pos |
     ```
-

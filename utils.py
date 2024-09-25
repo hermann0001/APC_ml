@@ -1,12 +1,24 @@
 import pandas as pd
 import os
+import re
 
 def extract_id_from_uri(uri):
     """ Extract the ID from a URI string. """
     return uri.split(':')[-1]
 
-def reconstruct_uri(uri):
-    return "spotify:track:" + uri
+def normalize_name(name):
+    name = name.lower()
+    name = re.sub(r"[.,#!$%\^\*;:{}=\_`~()@]", ' ', name)
+    name = re.sub(r'\s+', ' ', name).strip()
+    return name
+
+def reconstruct_uri(uri, type):
+    if type == 'track':
+        return "spotify:track:" + uri
+    elif type == 'artist':
+        return "spotify:artist:" + uri
+    elif type == 'album':
+        return "spotify:album:" + uri
 
 def check_csv(file_path, expected_rows, id_column=None):
     """

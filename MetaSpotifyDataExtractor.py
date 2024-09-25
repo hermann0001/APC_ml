@@ -1,67 +1,49 @@
 #little scripts for meta dati of spotify tracks
 import requests # type: ignore
 import spotipy as sp
-import pandas as pd
-import os
+from spotipy import SpotifyClientCredentials
 from utils import reconstruct_uri
+import argparse
+import sys
 
-CLIENT_ID = ''
-CLIENT_SECRET = ''
+CLIENT_ID = '***'
+CLIENT_SECRET = '***'
 SRC_FOLDER = 'formatted/dataset/'
 TRACKS_CSV = 'tracks.csv'
 
-def get_access_token(client_id, client_secret):
-    url = 'https://accounts.spotify.com/api/token'
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
-    body = {
-        'grant_type': 'client_credentials',
-        'client_id': client_id,
-        'client_secret': client_secret
-    }
+def get_spotify_metadata(uri, type):
+    # initialize spotify api
+    ccm = SpotifyClientCredentials(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+    api = sp.Spotify(client_credentials_manager=ccm)
 
-    response = requests.post(url, headers=headers, data=body)
-    
-    if response.status_code == 200:
-        return response.json().get('access_token')
-    else:
-        print(f"Error: {response.status_code}")
+    uri = reconstruct_uri(uri, type)
+
+    try:
+        if type == 'track':
+            metadata = api.track(uri) 
+        elif type == 'artist':
+            metadata = api.artist(uri)
+        else:
+            metadata = api.album(uri)
+        
+        return metadata
+    except Exception as e:
+        print(f"Error retrieving metadata: {e}")
         return None
-
-# Utilizzo:
-
-
-def get_tracks(access_token, track):
-    url = 'https://api.spotify.com/v1/audio-features/' + track
-    headers = {
-        'Authorization': f'Bearer {access_token}'
-    }
-
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Error: {response.status_code}, {response.text}")
-        return None
-
 
 if __name__ == '__main__':
-    
-    # token = get_access_token(CLIENT_ID, CLIENT_SECRET)
+    parser = argparse.ArgumentParser(description="Spoitify API Credentials")
+    parser.add_argument('--client-id', type=str, required=True, help='Your Spotify Client ID')
+    parser.add_argument('--client-secret', type=str, required=True, help='Your Spotify Client Secret')
+    args = parser.parse_args()
 
-    # if token:
-    #     print(f"Access Token: {token}")
+    if not args.client_id or not args.client_secret:
+        print("Usage: python3 MetaSpotifyDataExtractor.py --client-id='YOUR_CLIENT_ID' --client-secret='YOUR_CLIENT_SECRET'")
+        sys.exit(1)
 
-    # track_id = ''
-    # tracks = get_tracks(token, track_id)
+    CLIENT_ID = args.client_id
+    CLIENT_SECRET = args.client_secret
 
-    # if tracks:
-    #     print(tracks)
-    
-    tracks_data = pd.read_csv(os.path.join(SRC_FOLDER, TRACKS_CSV), usecols=['track_uri'])
-    tracks_data['track_id'] = tracks_data['track_uri']
-    tracks_data['track_uri'] = tracks_data['track_uri'].apply(reconstruct_uri)
-    tracks_data.drop_duplicates(inplace=True)
-    print(tracks_data.head())
+    test_uri = "40Yq4vzPs9VNUrIBG5Jr2i"
+    data = get_spotify_metadata(test_uri, 'artist')
+    print(data)
