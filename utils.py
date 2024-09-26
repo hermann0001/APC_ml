@@ -9,6 +9,7 @@ def extract_id_from_uri(uri):
     return uri.split(':')[-1]
 
 def normalize_name(name):
+    if pd.isna(name): return name
     name = name.lower()
     name = re.sub(r"[.,#!$%\^\*;:{}=\_`~()@]", ' ', name)
     name = re.sub(r'\s+', ' ', name).strip()

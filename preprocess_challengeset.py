@@ -4,100 +4,39 @@ import seaborn as sns
 from utils import normalize_name
 import gc
 from MetaSpotifyDataExtractor import get_spotify_metadata
-from sklearn.model_selection import train_test_split
+import sys
 
 SAMPLE_SIZE = 300000 # no. of rows loaded (total = 1M)
-SRC_FOLDER = "formatted/dataset/"
+SRC_FOLDER = "formatted/challenge_set/"
 PLAYLIST_CSV = SRC_FOLDER + "playlists.csv"
-TRACK_CSV = SRC_FOLDER + "tracks.csv"
-ARTISTS_CSV = SRC_FOLDER + "artists.csv"
 PLAYLIST_TRACKS_CSV = SRC_FOLDER + "playlist_tracks.csv"
-
-def fill_nan_names(df):
-    nan_track_name = df[df['track_name'].isna()]
-    nan_artist_name = df[df['artist_name'].isna()]
-
-    for index, row in nan_track_name.iterrows():
-        metadata = get_spotify_metadata(uri=row['track_uri'], type='track')
-        if metadata: 
-            df.at[index, 'track_name'] = metadata['name']
     
-    for index, row in nan_artist_name.iterrows():
-        metadata = get_spotify_metadata(uri=row['artist_uri'], type='artist')
-        if metadata:
-            df.at[index, 'artist_name'] = metadata['name']
-
-    df.fillna({'playlist_name':'unknown'}, inplace=True)
-    
-    
-artists_df = pd.read_csv(ARTISTS_CSV)
-tracks_df = pd.read_csv(TRACK_CSV, usecols=['track_id', 'track_name', 'artist_id', 'track_uri'])
 playlists_df = pd.read_csv(PLAYLIST_CSV, usecols=['playlist_id', 'name'])
 playlist_tracks_df = pd.read_csv(PLAYLIST_TRACKS_CSV, usecols=['playlist_id', 'track_id', 'pos'])
 
 # check duplicates in csv, todo: fix generation of csv
-print(f"playlist_tracks_df duplicated rows: {playlist_tracks_df.duplicated().sum()}")
-print(f"tracks_df duplicated rows: {tracks_df.duplicated().sum()}")
-print(f"playlists_df duplicated rows: {playlists_df.duplicated().sum()}")
-print(f"artists_df duplicated rows: {artists_df.duplicated().sum()}")
+print(playlist_tracks_df.duplicated().sum()) 
+print(playlists_df.duplicated().sum()) 
 
-tracks_df = tracks_df.drop_duplicates().reset_index(drop=True)
-artists_df = artists_df.drop_duplicates().reset_index(drop=True)
-
-print(f"tracks_df duplicated rows: {tracks_df.duplicated().sum()}")
-print(f"artists_df duplicated rows: {artists_df.duplicated().sum()}")
-
-# playlists_df = playlists_df.rename(columns={'duration_ms':'playlist_duration_ms'})
-# tracks_df = tracks_df.rename(columns={'duration_ms':'track_duration_ms'})
 playlists_df = playlists_df.rename(columns={'name' : 'playlist_name'})
 
 playlists_df['playlist_id'] = pd.to_numeric(playlists_df['playlist_id'], downcast='integer')
-tracks_df['artist_id'] = pd.to_numeric(tracks_df['artist_id'], downcast='integer')
-tracks_df['track_id'] = pd.to_numeric(tracks_df['track_id'], downcast='integer')
 playlist_tracks_df['track_id'] = pd.to_numeric(playlist_tracks_df['track_id'], downcast='integer')
 playlist_tracks_df['pos'] = pd.to_numeric(playlist_tracks_df['pos'], downcast='integer')
 playlist_tracks_df['playlist_id'] = pd.to_numeric(playlist_tracks_df['playlist_id'], downcast='integer')
 
-dataframe = pd.merge(playlist_tracks_df, tracks_df, on='track_id')
-dataframe = pd.merge(dataframe, playlists_df, on='playlist_id')
-dataframe = pd.merge(dataframe, artists_df, on='artist_id')
+dataframe = pd.merge(playlist_tracks_df, playlists_df, on='playlist_id')
 
 # reorganizing order of columns
 dataframe = dataframe.reindex(columns=['playlist_id', 'playlist_name', 'track_id', 'track_name', 'track_uri', 'pos', 'artist_id', 'artist_name', 'artist_uri'])
 
-# free memory! or at least make sure you do it
-del tracks_df
-del playlists_df
-del playlist_tracks_df
-del artists_df
-gc.collect()
-
-# count NaN and fill NaN
-print(dataframe.isna().sum())
-fill_nan_names(dataframe)
-print(dataframe.isna().sum())
-
-
 # Normalize text fields (idk why this makes crash)
-# dataframe['playlist_name'] = dataframe['playlist_name'].apply(normalize_name)
-# dataframe['track_name'] = dataframe['track_name'].apply(normalize_name)
-# dataframe['artist_name'] = dataframe['artist_name'].apply(normalize_name)
-
-#####################################
-########### PREPARATION #############
-#####################################
-
-# group tracks by playlists to form documents
-playlist_documents = dataframe.groupby('playlist_id')['track_id'].apply(list).reset_index()
-
-# split train and test set
-train_playlists, test_playlists = train_test_split(playlist_documents, test_size=0.2, random_state=666)
-print(f"Train playlists: {len(train_playlists)}, Test Playlists: {len(test_playlists)}")
-# scrivi train e test in file cosi da poterli riusare per diversi modelli
-
+dataframe['playlist_name'] = dataframe['playlist_name'].apply(normalize_name)
+dataframe['track_name'] = dataframe['track_name'].apply(normalize_name)
+dataframe['artist_name'] = dataframe['artist_name'].apply(normalize_name)
 
 # Save the dataframe in high performance dataframe on disk
-dataframe.to_feather('formatted/dataframe.feather')
+dataframe.to_feather(SRC_FOLDER + 'dataframe.feather')
 
 
 ######################################################  <--- MOVE THIS PART TO ANOTHER FILE

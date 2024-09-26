@@ -12,14 +12,10 @@ MDL_FOLDER = 'models/'
 #####################################
 
 # load preprocessed dataset
-df = pd.read_feather("formatted/dataframe.feather")
+train_playlists = pd.read_feather("formatted/dataframe.feather")
 
 # group tracks by playlists to form documents
-playlist_documents = df.groupby('playlist_id')['track_id'].apply(list).reset_index()
-
-# split train and test set
-train_playlists, test_playlists = train_test_split(playlist_documents, test_size=0.2, random_state=666)
-print(f"Train playlists: {len(train_playlists)}, Test Playlists: {len(test_playlists)}")
+playlist_documents = train_playlists.groupby('playlist_id')['track_id'].apply(list).reset_index()
 
 #####################################
 ############ TRAINING ###############
