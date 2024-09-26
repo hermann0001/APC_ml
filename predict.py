@@ -3,39 +3,52 @@ import numpy as np
 from gensim.models import Doc2Vec
 from sklearn.metrics.pairwise import cosine_similarity
 import sys
+from collections import defaultdict
 
 MDL_FOLDER = 'models/'
 
-model = Doc2Vec.load(MDL_FOLDER + "d2v-trained-model.model")
+# Assume `model` is your trained Doc2Vec model
+# Assume `test_playlists` is a list of playlists for testing with their ground truth
+# Each entry should have a 'playlist_id' and 'ground_truth' list of track URIs
 
-def reccomend_songs_doc2vec(playlist_id, model, top_n=10): 
-    """Generate recommendations based on Doc2Vec model."""
-    inferred_vector = model.infer_vector(playlist_id)
+def get_recommendations(playlist_name, model, top_n=10):
+    # Retrieve similar playlists and get their recommended songs
+    similar_playlists = model.dv.most_similar(playlist_name, topn=top_n)
+    recommended_songs = []
+    
+    for pl_name, _ in similar_playlists:
+        # Assuming you have a function to get songs from a playlist name
+        songs = get_songs(pl_name)
+        recommended_songs.extend(songs)
+    
+    return list(set(recommended_songs))  # Return unique songs
 
-    # Inizializza le somiglianze
-    similar_playlists = model.dv.most_similar([inferred_vector], topn=top_n)
+def calculate_metrics(test_playlists, model, top_n=10):
+    correct_recommendations = 0
+    total_recommendations = 0
+    relevant_recommendations = 0
 
-    recommended_tracks = []
-    for playlist_id, simalirity in similar_playlists:
-        playlist_tracks = ...
+    for pl in test_playlists:
+        ground_truth = set(pl['ground_truth'])
+        recommendations = get_recommendations(pl['name'].lower(), model, top_n)
 
-    # Calcola le similarità con tutte le tracce nel dataset
-    for idx, row in df.iterrows():
-        # Crea il documento per la traccia
-        track_doc = [str(row['artist_name']), str(row['track_name'])]
-        # Inferisci il vettore per la traccia
-        track_vector = model.infer_vector(track_doc)
-        # Calcola la similarità
-        similarity = cosine_similarity([playlist_vector], [track_vector])[0][0]
-        similarities.append((row['track_name'], row['artist_name'], similarity))
+        # Update counts
+        total_recommendations += len(recommendations)
+        correct_recommendations += len(ground_truth.intersection(recommendations))
+        relevant_recommendations += len(recommendations)
 
-    # Ordina le tracce in base alla similarità
-    similarities.sort(key=lambda x: x[2], reverse=True)
+    accuracy = correct_recommendations / total_recommendations if total_recommendations > 0 else 0
+    precision = correct_recommendations / relevant_recommendations if relevant_recommendations > 0 else 0
+    
+    return accuracy, precision
 
-    # Restituisci i top N brani raccomandati
-    return similarities[:top_n]
+# Example usage
+test_playlists = [
+    {'name': 'My Playlist 1', 'ground_truth': ['track_uri1', 'track_uri2', 'track_uri3']},
+    {'name': 'My Playlist 2', 'ground_truth': ['track_uri4', 'track_uri5']},
+    # Add more test playlists...
+]
 
-# Esempio di utilizzo
-recommended_songs = recommend_songs_for_playlist("Brasileiras", unique_playlists, model, top_n=10)
-for song in recommended_songs:
-    print(f"Track: {song[0]}, Artist: {song[1]}, Similarity: {song[2]:.4f}")
+accuracy, precision = calculate_metrics(test_playlists, model, top_n=10)
+print(f'Accuracy: {accuracy:.4f}')
+print(f'Precision: {precision:.4f}')
