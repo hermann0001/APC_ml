@@ -2,13 +2,16 @@ import pandas as pd
 import numpy as np
 from gensim.models import Doc2Vec
 from sklearn.metrics.pairwise import cosine_similarity
+import sys
 
-df = pd.read_feather("/home/matteo/APC_ml/formatted/dataframe.feather")
+MDL_FOLDER = 'models/'
+
+df = pd.read_feather("formatted/dataframe.feather")
 
 unique_playlists = df.drop_duplicates(subset='playlist_id').head(1000)
 print(unique_playlists.head())
 
-model = Doc2Vec.load("d2v-trained-model.model")
+model = Doc2Vec.load(MDL_FOLDER + "d2v-trained-model.model")
 
 def recommend_songs_for_playlist(playlist_name, unique_playlists ,model, top_n=10):
     # Filtra il DataFrame per ottenere la playlist

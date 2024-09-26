@@ -4,3 +4,4 @@
 /challenge_set/
 /__pycache__/
 .cache
+/models/*.npy
