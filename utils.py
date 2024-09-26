@@ -1,6 +1,8 @@
 import pandas as pd
 import os
 import re
+from gensim.models.callbacks import CallbackAny2Vec
+
 
 def extract_id_from_uri(uri):
     """ Extract the ID from a URI string. """
@@ -61,3 +63,19 @@ def check_csv(file_path, expected_rows, id_column=None):
     print(f"{file_path} is correctly written.")
     return True
 
+class Callback(CallbackAny2Vec):
+    def __init__(self):
+        self.epoch = 1
+        self.training_loss = []
+    
+    def on_epoch_end(self, model):
+        loss = model.get_latest_training_loss()
+        if self.epoch == 1:
+            current_loss = loss
+        else:
+            current_loss = loss - self.loss_previous_step
+        
+        print(f"Loss after epoch {self.epoch}: {current_loss}")
+        self.training_loss.append(current_loss)
+        self.epoch += 1
+        self.loss_previous_step = loss

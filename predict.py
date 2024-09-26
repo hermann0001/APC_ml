@@ -24,7 +24,11 @@ def recommend_songs_for_playlist(playlist_name, unique_playlists ,model, top_n=1
     playlist_vector = model.infer_vector(playlist_doc)
 
     # Inizializza le somiglianze
-    similarities = []
+    similar_playlists = model.dv.most_similar([playlist_vector], topn=top_n)
+
+    recommended_tracks = []
+    for playlist_id, similarity in similar_playlists:
+        playlist_tracks = train_pla
 
     # Calcola le similarità con tutte le tracce nel dataset
     for idx, row in df.iterrows():

@@ -4,6 +4,7 @@ import torch
 from sklearn.model_selection import train_test_split
 import multiprocessing
 import logging
+from utils import Callback
 
 MDL_FOLDER = 'models/'
 
@@ -44,12 +45,13 @@ documents = [TaggedDocument(words=playlist, tags=[str(pid)]) for pid, playlist i
 # workers:      Quanti processori lavorano parallelamente al training
 # epoch:        Numero di iterazioni sull'intero corpus
 # dm:           controlla l'algoritmo di training, per dm=1 usiamo Distributed Memory(DM), simile al modello Continuos Bag of Words (CBOW) usato per Word2Vec, per dm=0 si usa il Distributed Bag of Words(DBOW) simile al modello skip-gram per word2vec
-model = Doc2Vec(vector_size=300, window=5, min_count=1, workers=multiprocessing.cpu_count(), epochs=10, dm=1, compute_loss=True)
+model = Doc2Vec(vector_size=300, window=5, min_count=1, workers=multiprocessing.cpu_count(), epochs=10, dm=1)
 
 # Addestra il modello
 model.build_vocab(documents)  # Costruisci il vocabolario
-model.train(documents, total_examples=model.corpus_count, epochs=model.epochs)
-print(f"Final training loss: {model.get_latest_training_loss()}")
+
+callback = Callback()
+model.train(documents, total_examples=model.corpus_count, epochs=model.epochs, compute_loss=True, callbacks=[callback])
 
 # Salva il modello
 model.save(MDL_FOLDER + "d2v-trained-model.model")
