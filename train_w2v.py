@@ -7,21 +7,7 @@ from utils import Callback
 
 MDL_FOLDER = 'models/'
 
-
-
-#####################################
-########### PREPARATION #############
-#####################################
-
-# load preprocessed dataset
-df = pd.read_feather("formatted/dataframe.feather")
-
-# group tracks by playlists to form documents
-playlist_documents = df.groupby('playlist_id')['track_id'].apply(list).reset_index()
-
-# split train and test set
-train_playlists, test_playlists = train_test_split(playlist_documents, test_size=0.2, random_state=666)
-print(f"Train playlists: {len(train_playlists)}, Test Playlists: {len(test_playlists)}")
+train_playlists = []        # operazione di lettura da file train.boh
 
 # prepare training data
 train_data = [playlist for playlist in train_playlists['track_id']]

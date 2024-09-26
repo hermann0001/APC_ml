@@ -6,29 +6,18 @@ import sys
 
 MDL_FOLDER = 'models/'
 
-df = pd.read_feather("formatted/dataframe.feather")
-
-unique_playlists = df.drop_duplicates(subset='playlist_id').head(1000)
-print(unique_playlists.head())
-
 model = Doc2Vec.load(MDL_FOLDER + "d2v-trained-model.model")
 
-def recommend_songs_for_playlist(playlist_name, unique_playlists ,model, top_n=10):
-    # Filtra il DataFrame per ottenere la playlist
-    playlist_data = unique_playlists[unique_playlists['playlist_name'] == playlist_name]
-    
-    # Crea un documento per inferire il vettore della playlist
-    playlist_doc = [str(playlist_name)] + playlist_data['artist_name'].tolist() + playlist_data['track_name'].tolist()
-    
-    # Inferisci il vettore per la playlist
-    playlist_vector = model.infer_vector(playlist_doc)
+def reccomend_songs_doc2vec(playlist_id, model, top_n=10): 
+    """Generate recommendations based on Doc2Vec model."""
+    inferred_vector = model.infer_vector(playlist_id)
 
     # Inizializza le somiglianze
-    similar_playlists = model.dv.most_similar([playlist_vector], topn=top_n)
+    similar_playlists = model.dv.most_similar([inferred_vector], topn=top_n)
 
     recommended_tracks = []
-    for playlist_id, similarity in similar_playlists:
-        playlist_tracks = train_pla
+    for playlist_id, simalirity in similar_playlists:
+        playlist_tracks = ...
 
     # Calcola le similarità con tutte le tracce nel dataset
     for idx, row in df.iterrows():

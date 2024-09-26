@@ -4,6 +4,7 @@ import seaborn as sns
 from utils import normalize_name
 import gc
 from MetaSpotifyDataExtractor import get_spotify_metadata
+from sklearn.model_selection import train_test_split
 
 SAMPLE_SIZE = 300000 # no. of rows loaded (total = 1M)
 SRC_FOLDER = "formatted/dataset/"
@@ -76,32 +77,24 @@ print(dataframe.isna().sum())
 fill_nan_names(dataframe)
 print(dataframe.isna().sum())
 
-# Scale ms in seconds
-# dataframe['playlist_duration_mins'] = dataframe['playlist_duration_ms'] / 60000  
-# dataframe['track_duration_s'] = dataframe['track_duration_ms'] / 1000
-# Convert into smaller data types
-# dataframe['num_tracks'] = pd.to_numeric(dataframe['num_tracks'], downcast='integer')
-# dataframe['num_albums'] = pd.to_numeric(dataframe['num_albums'], downcast='integer')
-# dataframe['num_followers'] = pd.to_numeric(dataframe['num_followers'], downcast='integer')
-# dataframe['num_edits'] = pd.to_numeric(dataframe['num_edits'], downcast='integer')
-# dataframe['modified_at'] = pd.to_datetime(dataframe['modified_at'], unit='s')
-# dataframe['num_artists'] = pd.to_numeric(dataframe['num_artists'], downcast='integer')
-# dataframe['playlist_duration_mins'] = pd.to_numeric(dataframe['playlist_duration_mins'], downcast='float')
-# dataframe['track_duration_s'] = pd.to_numeric(dataframe['track_duration_s'], downcast='float')
 
 # Normalize text fields (idk why this makes crash)
 # dataframe['playlist_name'] = dataframe['playlist_name'].apply(normalize_name)
 # dataframe['track_name'] = dataframe['track_name'].apply(normalize_name)
 # dataframe['artist_name'] = dataframe['artist_name'].apply(normalize_name)
 
-#dataframe.dropna(subset=['artist_name', 'track_name', 'album_name'], inplace=True)
-#dataframe.drop(columns=['description'], inplace=True)
+#####################################
+########### PREPARATION #############
+#####################################
 
-print(dataframe.info())
-print(dataframe.head())
+# group tracks by playlists to form documents
+playlist_documents = dataframe.groupby('playlist_id')['track_id'].apply(list).reset_index()
 
-#dataframe = dataframe.drop(columns=['track_uri', 'artist_uri'])
-#gc.collect()
+# split train and test set
+train_playlists, test_playlists = train_test_split(playlist_documents, test_size=0.2, random_state=666)
+print(f"Train playlists: {len(train_playlists)}, Test Playlists: {len(test_playlists)}")
+# scrivi train e test in file cosi da poterli riusare per diversi modelli
+
 
 # Save the dataframe in high performance dataframe on disk
 dataframe.to_feather('formatted/dataframe.feather')
