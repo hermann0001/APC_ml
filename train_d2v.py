@@ -32,13 +32,13 @@ for _, row in train_playlists.iterrows():
 # workers:      Quanti processori lavorano parallelamente al training
 # epoch:        Numero di iterazioni sull'intero corpus
 # dm:           controlla l'algoritmo di training, per dm=1 usiamo Distributed Memory(DM), simile al modello Continuos Bag of Words (CBOW) usato per Word2Vec, per dm=0 si usa il Distributed Bag of Words(DBOW) simile al modello skip-gram per word2vec
-model = Doc2Vec(vector_size=256, window=5, min_count=5, workers=multiprocessing.cpu_count(), epochs=10, dm=1, negative=5,compute_loss=True)
+model = Doc2Vec(vector_size=256, window=5, min_count=5, workers=multiprocessing.cpu_count(), epochs=10, dm=1, negative=5)
 
 # Addestra il modello
 model.build_vocab(documents)  # Costruisci il vocabolario
 
 loss_logger = LossLogger()
-model.train(documents, total_examples=model.corpus_count, epochs=model.epochs, callbacks=[loss_logger], compute_loss=True)
+model.train(documents, total_examples=model.corpus_count, epochs=model.epochs, compute_loss=True, callbacks=[loss_logger])
 
 # Salva il modello
 model.save(MDL_FOLDER + "d2v-trained-model.model")
