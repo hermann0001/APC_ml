@@ -2,8 +2,7 @@ import pandas as pd
 import numpy as np
 from gensim.models import Doc2Vec
 from sklearn.metrics.pairwise import cosine_similarity
-from collections import defaultdict
-import sys, os
+
 
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
