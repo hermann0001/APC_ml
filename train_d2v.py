@@ -1,32 +1,27 @@
 import pandas as pd
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
-from sklearn.model_selection import train_test_split
 import multiprocessing
 import logging
-from utils import Callback
+from utils import LossLogger
 
 MDL_FOLDER = 'models/'
+SRC_FOLDER = 'formatted/dataset/'
 
-#####################################
-########### PREPARATION #############
-#####################################
-
-# load preprocessed dataset
-train_playlists = pd.read_feather("formatted/dataframe.feather")
-
-# group tracks by playlists to form documents
-playlist_documents = train_playlists.groupby('playlist_id')['track_id'].apply(list).reset_index()
-
-#####################################
-############ TRAINING ###############
-#####################################
-
+# load training set
+train_playlists = pd.read_feather(SRC_FOLDER + 'train.feather')
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 # Prepare training data (tag each playlist with its ID)
-documents = [TaggedDocument(words=playlist, tags=[str(pid)]) for pid, playlist in zip(train_playlists['playlist_id'], train_playlists['track_id'])]
+documents = []
+for _, row in train_playlists.iterrows():
+    playlist_id = str(row['playlist_id'])
+    
+    words=[f"{track}_{artist}_{pos}" for track, artist, pos in zip(row['track_id'], row['artist_id'], row['pos'])]
+
+    documents.append(TaggedDocument(words=words, tags=[playlist_id]))
+
 
 # Imposta i parametri per l'addestramento
 # vector_size:  definisce la dimensionalità del vettore di output di parole. Ogni playlist (o word) sarà rappresentata da un vettore n-dimensionale.
@@ -37,15 +32,14 @@ documents = [TaggedDocument(words=playlist, tags=[str(pid)]) for pid, playlist i
 # workers:      Quanti processori lavorano parallelamente al training
 # epoch:        Numero di iterazioni sull'intero corpus
 # dm:           controlla l'algoritmo di training, per dm=1 usiamo Distributed Memory(DM), simile al modello Continuos Bag of Words (CBOW) usato per Word2Vec, per dm=0 si usa il Distributed Bag of Words(DBOW) simile al modello skip-gram per word2vec
-model = Doc2Vec(vector_size=300, window=5, min_count=1, workers=multiprocessing.cpu_count(), epochs=1, dm=1)
+model = Doc2Vec(vector_size=256, window=5, min_count=5, workers=multiprocessing.cpu_count(), epochs=10, dm=1, negative=5,compute_loss=True)
 
 # Addestra il modello
 model.build_vocab(documents)  # Costruisci il vocabolario
 
-callback = Callback()
-model.train(documents, total_examples=model.corpus_count, epochs=model.epochs, compute_loss=True, callbacks=[callback])
+loss_logger = LossLogger()
+model.train(documents, total_examples=model.corpus_count, epochs=model.epochs, callbacks=[loss_logger], compute_loss=True)
 
 # Salva il modello
 model.save(MDL_FOLDER + "d2v-trained-model.model")
-
 print("Model trained and saved")

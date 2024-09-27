@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import re
 from gensim.models.callbacks import CallbackAny2Vec
+import logging
 
 
 def extract_id_from_uri(uri):
@@ -64,19 +65,15 @@ def check_csv(file_path, expected_rows, id_column=None):
     print(f"{file_path} is correctly written.")
     return True
 
-class Callback(CallbackAny2Vec):
+class LossLogger(CallbackAny2Vec):
     def __init__(self):
-        self.epoch = 1
-        self.training_loss = []
+        self.epoch = 0
+        self.loss_previous_step = 0
     
     def on_epoch_end(self, model):
-        loss = model.get_latest_training_loss()
-        if self.epoch == 1:
-            current_loss = loss
-        else:
-            current_loss = loss - self.loss_previous_step
-        
-        print(f"Loss after epoch {self.epoch}: {current_loss}")
-        self.training_loss.append(current_loss)
-        self.epoch += 1
-        self.loss_previous_step = loss
+        current_loss = model.get_latest_training_loss()
+        logging.info(f"current loss {current_loss}")
+        loss_in_epoch = current_loss - self.loss_previous_step
+        self.loss_previous_step = current_loss
+        logging.info(f"Model {model} - Epoch {self.epoch} Loss: {loss_in_epoch}")
+        self.epoch +=1

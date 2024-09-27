@@ -5,7 +5,6 @@ from utils import normalize_name
 import gc
 from MetaSpotifyDataExtractor import get_spotify_metadata
 from sklearn.model_selection import train_test_split
-import sys
 
 SAMPLE_SIZE = 300000 # no. of rows loaded (total = 1M)
 SRC_FOLDER = "formatted/dataset/"
@@ -86,7 +85,7 @@ gc.collect()
 
 print("\nSaving dataframe to disk...")
 # Save the dataframe in high performance dataframe on disk
-dataframe.to_feather(SRC_FOLDER + 'dataframe.feather')
+dataframe.to_feather('formatted/dataset/dataframe.feather')
 
 ######################################################  <--- MOVE THIS PART TO ANOTHER FILE
 

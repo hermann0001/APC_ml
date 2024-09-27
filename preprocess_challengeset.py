@@ -4,7 +4,6 @@ import seaborn as sns
 from utils import normalize_name
 import gc
 from MetaSpotifyDataExtractor import get_spotify_metadata
-import sys
 
 SAMPLE_SIZE = 300000 # no. of rows loaded (total = 1M)
 SRC_FOLDER = "formatted/challenge_set/"
@@ -27,13 +26,8 @@ playlist_tracks_df['playlist_id'] = pd.to_numeric(playlist_tracks_df['playlist_i
 
 dataframe = pd.merge(playlist_tracks_df, playlists_df, on='playlist_id')
 
-# reorganizing order of columns
-dataframe = dataframe.reindex(columns=['playlist_id', 'playlist_name', 'track_id', 'track_name', 'track_uri', 'pos', 'artist_id', 'artist_name', 'artist_uri'])
-
 # Normalize text fields (idk why this makes crash)
 dataframe['playlist_name'] = dataframe['playlist_name'].apply(normalize_name)
-dataframe['track_name'] = dataframe['track_name'].apply(normalize_name)
-dataframe['artist_name'] = dataframe['artist_name'].apply(normalize_name)
 
 # Save the dataframe in high performance dataframe on disk
 dataframe.to_feather(SRC_FOLDER + 'dataframe.feather')

@@ -6,7 +6,7 @@ from collections import defaultdict
 import sys, os
 
 MDL_FOLDER = 'models/'
-CHALLENGE_FOLDER = 'formatted/challenge_set/'
+SRC_FOLDER = 'formatted/dataset/'
 DATASET_FOLDER = 'formatted/dataset/'
 PLAYLIST_TRACKS_CSV = 'playlists_tracks.csv'
 PLAYLISTS_CSV = 'playlists.csv'
@@ -46,41 +46,12 @@ def calculate_metrics(test_playlists, model, top_n=10):
     
     return accuracy, precision
 
-# Example usage
-test_playlists = [
-    {'name': 'My Playlist 1', 'ground_truth': ['track_uri1', 'track_uri2', 'track_uri3']},
-    {'name': 'My Playlist 2', 'ground_truth': ['track_uri4', 'track_uri5']},
-    # Add more test playlists...
-]
-
-def load_test_data():
-    #playlist_tracks_test = pd.read_csv(CHALLENGE_FOLDER + PLAYLIST_TRACKS_CSV)
-    playlists_test = pd.read_csv(CHALLENGE_FOLDER + PLAYLISTS_CSV, usecols=['playlist_id', 'name',])
-    playlists_train = pd.read_csv(DATASET_FOLDER + PLAYLISTS_CSV, usecols=[''])
-
-    print(playlists_train.head())
-    print(playlists_train.info())
-    sys.exit(1)
-    common_ids = playlists_test['playlist_id'].isin(playlists_df['playlist_id']).sum()
-    total_ids = len(test_set)
-    print(f"{common_ids} playlist_id su {total_ids} trovati in playlists_df")
-
-    print(f"playlists_df duplicated rows: {playlists_df.duplicated().sum()}")
-
-
-    merged_df = pd.merge(playlists_df,test_set, on='playlist_id', how='left')
-
-    print(merged_df.head())
-    
-    
-
 if __name__ == '__main__':
-
-    load_test_data()
-    model = Doc2Vec.load(MDL_FOLDER + ' d2v-trained-model.model')
+    model = Doc2Vec.load(MDL_FOLDER + 'd2v-trained-model.model')
+    test_set = pd.read_feather(SRC_FOLDER + 'test.feather')
     print(f"Model hyperparameters:{model}")
     
 
-    accuracy, precision = calculate_metrics(test_playlists, model, top_n=10)
+    accuracy, precision = calculate_metrics(test_set, model, top_n=10)
     print(f'Accuracy: {accuracy:.4f}')
     print(f'Precision: {precision:.4f}')
