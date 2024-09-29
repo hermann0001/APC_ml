@@ -59,6 +59,10 @@ def compute_metrics(df_playlists_tracks):
         second_half_artists = set(artist_ids[half_index:])
         jaccard_similarity = len(first_half_artists & second_half_artists) / len(first_half_artists | second_half_artists) if len(first_half_artists | second_half_artists) > 0 else 0
 
+
+        #CARINA DA METTERE PER MANNO:
+
+
         # Artist heterogeneity
         heterogeneity_order = artist_heterogeneity(group.head(30))
         if len(group) > 30:
