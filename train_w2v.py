@@ -3,6 +3,8 @@ import pandas as pd
 import multiprocessing
 import logging
 from utils import LossLogger
+from datetime import datetime  # Importing datetime
+
 
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
@@ -10,28 +12,39 @@ SRC_FOLDER = 'formatted/dataset/'
 train_playlists = pd.read_feather(SRC_FOLDER + 'train.feather')
 
 # Set up logging
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')  # Format: YYYYMMDD_HHMMSS
+log_filename = f'training_log_{timestamp}.txt'  # Log file name with timestamp
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+file_handler = logging.FileHandler(log_filename)
+file_handler.setFormatter(logging.Formatter('%(asctime)s : %(levelname)s : %(message)s'))
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(logging.Formatter('%(asctime)s : %(levelname)s : %(message)s'))
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
 
 train_data = []
 for _, row in train_playlists.iterrows():
     words = [f"{track}_{artist}_{pos}" for track, artist, pos in zip(row['track_id'], row['artist_id'], row['pos'])]
     train_data.append(words)
 
+logger.info("Loaded train data...")
+
 #####################################
 ############ TRAINING ###############
 #####################################
 
 # Train Word2Vec model
-model = Word2Vec(vector_size=400, window=10, min_count=3, workers=multiprocessing.cpu_count(), epochs=150, sg=0, negative=5, alpha=0.1)
+model = Word2Vec(vector_size=400, window=20, min_count=1, workers=multiprocessing.cpu_count(), epochs=20, sg=0, negative=5, alpha=0.1)
 model.build_vocab(train_data)
 
 loss_logger = LossLogger()
 model.train(train_data, total_examples=model.corpus_count, epochs=model.epochs,  compute_loss=True, callbacks=[loss_logger])
 
-print(loss_logger.losses)
+logger.info(f"Losses: {loss_logger.losses}")
 
 model.save(MDL_FOLDER + 'w2v-trained-model.model')
-print("Model trained and saved")
+logger.info("Model trained and saved")
 
 # Epoch 0 Loss: 16777216.0
 # Epoch 1 Loss:     1032.0

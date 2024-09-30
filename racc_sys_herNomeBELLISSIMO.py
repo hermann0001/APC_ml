@@ -1,7 +1,9 @@
 from gensim.models import Word2Vec
 
+SRC_FOLDER = 'models/'
+MODEL = 'd2v-trained-model.model'
 
-w2v_model = Word2Vec.load('models/word2vec-trained-model.model')
+w2v_model = Word2Vec.load(SRC_FOLDER + MODEL)
 
 input_playlist = ['75285', '2446', '7033', '29280', '1713']
 
