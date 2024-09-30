@@ -46,11 +46,17 @@ def calculate_metrics(ground_truth, predictions):
         y_pred.extend(predicted_tracks)
 
     # Calculate metrics
+    print("Calculating precision")
     precision = precision_score(y_true, y_pred, average='binary')
+    print("Calculating recall")
     recall = recall_score(y_true, y_pred, average='binary')
+    print("Calculating f1 score")
     f1 = f1_score(y_true, y_pred, average='binary')
+    print("Calculating accuracy")
     accuracy = accuracy_score(y_true, y_pred, average='binary')
+    print("Calculating r_precision")
     r_precision = r_precision_score(predictions, ground_truth)
+    print("Calculating ndcg")
     ndcg = ndcg_score(predictions, ground_truth)
 
 
