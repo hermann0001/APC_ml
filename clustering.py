@@ -34,9 +34,17 @@ def spherical_kmeans(X, n_clusters, max_iter=300):
 def locate_optimal_elbow(x, y):
     logging.info('Calculating optimal elbow point.')
     
+    if x.empty or y.empty:
+        raise ValueError("Input Series cannot be empty")
+
+    if not isinstance(x, pd.Series):
+        x = pd.Series(x)
+    if not isinstance(y, pd.Series):
+        y = pd.Series(y)
+
     # Connect the first and last point of the curve with a straight line
     line_start = (x[0], y[0])
-    line_end = (x[-1], y[-1])
+    line_end = (x.iloc[-1], y.iloc[-1])
     
     # Calculate distances from points to the line
     distances = []
@@ -53,18 +61,28 @@ def locate_optimal_elbow(x, y):
 
 
 wcss = []  # List to hold Within-Cluster Sum of Squares (WCSS)
-for n_clusters in range(10, 501, 10):  # Iterate over number of clusters
+for n_clusters in range(10, 51, 10):  # Iterate over number of clusters
     logging.info(f'Calculating WCSS for {n_clusters} clusters.')
     labels = spherical_kmeans(embedding_matrix, n_clusters)
     # Calculate WCSS
     wcss.append(sum((np.linalg.norm(embedding_matrix[labels == i] - np.mean(embedding_matrix[labels == i], axis=0)))**2 for i in range(n_clusters)))
 
 # Create DataFrame to analyze WCSS
-skm_df = pd.DataFrame({'WCSS': wcss, 'n_clusters': range(10, 501, 10)})
+skm_df = pd.DataFrame({'WCSS': wcss, 'n_clusters': range(10, 151, 10)})
 
 # Locate optimal elbow
 k_opt = locate_optimal_elbow(skm_df['n_clusters'], skm_df['WCSS'])
 skm_opt_labels = spherical_kmeans(embedding_matrix, k_opt)
+
+# After calculating WCSS
+plt.figure(figsize=(10, 6))
+plt.plot(range(10, 201, 10), wcss, marker='o')
+plt.title('Elbow Method for Optimal k')
+plt.xlabel('Number of clusters')
+plt.ylabel('Within-Cluster Sum of Squares (WCSS)')
+plt.axvline(x=k_opt + 10, linestyle='--', color='red', label='Optimal k')
+plt.legend()
+plt.savefig('figures/elbow_method.png')
 
 # Prepare the DataFrame for songs with their clusters
 songs_cluster = pd.DataFrame(index=model.wv.index_to_key, columns=['cluster'])

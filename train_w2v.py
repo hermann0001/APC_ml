@@ -35,7 +35,7 @@ logger.info("Loaded train data...")
 #####################################
 
 # Train Word2Vec model
-model = Word2Vec(vector_size=400, window=20, min_count=1, workers=multiprocessing.cpu_count(), epochs=20, sg=0, negative=5, alpha=0.1)
+model = Word2Vec(vector_size=300, window=20, min_count=1, workers=multiprocessing.cpu_count(), epochs=100, sg=0, negative=5)
 model.build_vocab(train_data)
 
 loss_logger = LossLogger()
