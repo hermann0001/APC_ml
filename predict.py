@@ -12,11 +12,34 @@ SRC_FOLDER = 'formatted/dataset/'
 
 def get_similar_tracks(model, track_id, top_n=10):
     if isinstance(model, Word2Vec):
+        if track_id not in model.wv:
+            print(f"Warning: Track ID '{track_id}' not found in Word2Vec model's vocabulary.")
+            return []
         similar_tracks = model.wv.most_similar(track_id, topn=top_n)
     elif isinstance(model, Doc2Vec):
+        if track_id not in model.dv:
+            print(f"Warning: Track ID '{track_id}' not found in Doc2Vec model's vocabulary.")
+            return []
         similar_tracks = model.dv.most_similar(track_id, topn=top_n)
     else:
         raise ValueError("Invalid model type")
+    
+    return [track[0] for track in similar_tracks]
+
+def get_similar_tracks_by_id(model, track_id, top_n=10):
+    similar_tracks = []
+    
+    # Search in the model's vocabulary for tokens containing the track_id
+    for token in model.wv.index_to_key:
+        if token.startswith(f"{track_id}_"):
+            # Get most similar tracks for the found token
+            most_similar = model.wv.most_similar(token, topn=top_n)
+            
+            # Extract just the track_id from the similar tokens
+            similar_tracks.extend([sim_track.split('_')[0] for sim_track, _ in most_similar])
+    
+    # Remove duplicates while preserving order
+    similar_tracks = list(OrderedDict.fromkeys(similar_tracks))
     
     return similar_tracks
 
@@ -125,10 +148,12 @@ def main(model_type, playlist_id=None, track_id=None):
 
     if playlist_id is not None:
         print(f"Generating recommendations for playlist ID: {playlist_id}")
+        #print_playlist_info(playlist_id)
         recommendations = get_recommendations_for_playlist(model, playlist_id, test_set, top_n=10)
         print(f"Recommended tracks for playlist {playlist_id}: {recommendations}")
     elif track_id is not None:
         print(f"Finding similar tracks for track ID: {track_id}")
+        #print_track_info(track_id)
         similar_tracks = get_similar_tracks(model, track_id, top_n=10)
         print(f"Similar tracks to {track_id}: {similar_tracks}")
     else:
