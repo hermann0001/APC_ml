@@ -36,8 +36,13 @@ plt.plot(epochs, losses, marker='o', linestyle='-', color='b')
 
 plt.xlabel=('Epoch')
 plt.ylabel=('Loss')
+plt.xticks(epochs)  
 plt.title=('Word2Vec Training Loss over Epochs')
 plt.grid(True)
+
+plt.text(20, losses[-1] * 0.05, 'EPOCHS', ha='center') 
+plt.text(-1.5, max(losses) * 1.05, 'LOSS', va='center', rotation='vertical')
+plt.text(4, losses[-1]*12.5, "Loss function per alpha = 0.1",fontsize='xx-large')
 
 #plt.show()
 plt.savefig('w2v_loss_plot.png')
