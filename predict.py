@@ -10,23 +10,26 @@ from collections import OrderedDict
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
 
-def get_recommendations(model, test_set, top_n=10): 
-    def predict_for_playlist(row):
-        tracklist = row['track_id']
-        predicted_tracks = []
+def get_similar_tracks(model, track_id, top_n=10):
+    if isinstance(model, Word2Vec):
+        similar_tracks = model.wv.most_similar(track_id, topn=top_n)
+    elif isinstance(model, Doc2Vec):
+        similar_tracks = model.dv.most_similar(track_id, topn=top_n)
+    else:
+        raise ValueError("Invalid model type")
+    
+    return similar_tracks
 
-        for track in tracklist:
-            if isinstance(model, Word2Vec):
-                similar_tracks = model.wv.most_similar(track, topn=top_n)
-                predicted_tracks.extend([t[0] for t in similar_tracks])
-            elif isinstance(model, Doc2Vec):
-                similar_tracks = model.dv.most_similar(track, top_n)
-                predicted_tracks.extend([t[0] for t in similar_tracks])
+def get_recommendations_for_playlist(model, playlist_id, test_set, top_n=10):
+    tracklist = test_set.loc[test_set['playlist_id'] == playlist_id, 'track_id'].values[0]
+    predicted_tracks = []
 
-        return list(OrderedDict.fromkeys(predicted_tracks))
+    for track in tracklist:
+        similar_tracks = get_similar_tracks(model, track, top_n)
+        predicted_tracks.extend(similar_tracks)
 
-    test_set['predicted_tracks'] = test_set.apply(predict_for_playlist, axis=1)
-    return test_set[['playlist_id', 'predicted_tracks']]
+    # Remove duplicates while preserving order
+    return list(OrderedDict.fromkeys(predicted_tracks))
 
 def calculate_metrics(ground_truth, predictions):
     # Initialize lists to hold true labels and predictions
@@ -97,7 +100,6 @@ def ndcg_score(predictions, ground_truth):
         ndcgs.append(dcg / idcg if idcg > 0 else 0)
     return sum(ndcgs) / len(ndcgs)
 
-
 def build_ground_truth(df):
     ground_truth = []
 
@@ -116,18 +118,29 @@ def load_model(model_type):
     else:
         raise ValueError("Invalid model type, use: 'W2V' or 'D2V'")
     
-def main(model_type):
+def main(model_type, playlist_id=None, track_id=None):
     model = load_model(model_type)
     print(f"model loaded with params: {model}")
     test_set = pd.read_feather(SRC_FOLDER + 'test.feather')
+
+    if playlist_id is not None:
+        print(f"Generating recommendations for playlist ID: {playlist_id}")
+        recommendations = get_recommendations_for_playlist(model, playlist_id, test_set, top_n=10)
+        print(f"Recommended tracks for playlist {playlist_id}: {recommendations}")
+    elif track_id is not None:
+        print(f"Finding similar tracks for track ID: {track_id}")
+        similar_tracks = get_similar_tracks(model, track_id, top_n=10)
+        print(f"Similar tracks to {track_id}: {similar_tracks}")
+    else:
+        print("Please provide either a playlist_id or a track_id for recommendations.")
+
+
     print("\ntest set:")
     print(test_set)
     ground_truth = build_ground_truth(test_set)
     print("\nground truth:")
     print(ground_truth)
-    predictions = get_recommendations(model, test_set, top_n=10)
-    print("predictions:")
-    print(predictions)
+
     precision, recall, f1, accuracy, r_precision, ndcg = calculate_metrics(test_set, ground_truth)
     print(f'Accuracy:    {accuracy:.4f}')
     print(f'Precision:   {precision:.4f}')
@@ -137,8 +150,14 @@ def main(model_type):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Load and evaluate model')
+    parser = argparse.ArgumentParser(description='Get recommendations for a playlist or similar tracks for a given track.')
     parser.add_argument('--use-model', type=str, required=True, choices=['W2V', 'D2V'], help='Specify the model to use: \'W2V\' or \'D2V\'')
-    args = parser.parse_args()
-    main(args.use_model)
+    parser.add_argument('--playlist-id', type=str, help='Specify a playlist ID to get recommendations')
+    parser.add_argument('--track-id', type=str, help='Specify a track ID to find similar tracks')
 
+    args = parser.parse_args()
+    main(args.use_model, playlist_id=args.playlist_id, track_id=args.track_id)
+
+
+# pid           21058
+# track_id      39338
