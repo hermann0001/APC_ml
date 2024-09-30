@@ -109,9 +109,16 @@ def load_model(model_type):
     
 def main(model_type):
     model = load_model(model_type)
+    print(f"model loaded with params: {model}")
     test_set = pd.read_feather(SRC_FOLDER + 'test.feather')
+    print("\ntest set:")
+    print(test_set)
     ground_truth = build_ground_truth(test_set)
+    print("\nground truth:")
+    print(ground_truth)
     predictions = get_recommendations(model, test_set, top_n=10)
+    print("predictions:")
+    print(predictions)
     precision, recall, f1, accuracy, r_precision, ndcg = calculate_metrics(test_set, ground_truth)
     print(f'Accuracy:    {accuracy:.4f}')
     print(f'Precision:   {precision:.4f}')
