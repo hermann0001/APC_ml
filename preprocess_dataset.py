@@ -1,13 +1,11 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from utils import normalize_name
 import gc
 from MetaSpotifyDataExtractor import get_spotify_metadata
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-SAMPLE_SIZE = 500000 # no. of rows loaded (total = 1M)
+SAMPLE_SIZE = 10000 # no. of rows loaded (total = 1M)
 SRC_FOLDER = "formatted/dataset/"
 PLAYLIST_CSV = SRC_FOLDER + "playlists.csv"
 TRACK_CSV = SRC_FOLDER + "tracks.csv"
@@ -32,11 +30,11 @@ def fill_nan_names(artist_df, tracks_df):
 logging.info("Reading csv...")
 artists_df = pd.read_csv(ARTISTS_CSV)
 tracks_df = pd.read_csv(TRACK_CSV, usecols=['track_id', 'track_name', 'artist_id', 'track_uri'])
-playlists_df = pd.read_csv(PLAYLIST_CSV, usecols=['playlist_id', 'name'])
-playlist_tracks_df = pd.read_csv(PLAYLIST_TRACKS_CSV, usecols=['playlist_id', 'track_id', 'pos'], nrows=SAMPLE_SIZE)
+playlists_df = pd.read_csv(PLAYLIST_CSV, usecols=['playlist_id', 'name'], nrows=SAMPLE_SIZE)
+playlist_tracks_df = pd.read_csv(PLAYLIST_TRACKS_CSV, usecols=['playlist_id', 'track_id', 'pos'])
 
 # check duplicates in csv, todo: fix generation of csv
-logging.info(f"\nplaylist_tracks_df duplicated rows: {playlist_tracks_df.duplicated().sum()}")
+logging.info(f"playlist_tracks_df duplicated rows: {playlist_tracks_df.duplicated().sum()}")
 logging.info(f"tracks_df duplicated rows: {tracks_df.duplicated().sum()}")
 logging.info(f"playlists_df duplicated rows: {playlists_df.duplicated().sum()}")
 logging.info(f"artists_df duplicated rows: {artists_df.duplicated().sum()}")
@@ -70,9 +68,11 @@ playlist_tracks_df['pos'] = pd.to_numeric(playlist_tracks_df['pos'], downcast='i
 playlist_tracks_df['playlist_id'] = pd.to_numeric(playlist_tracks_df['playlist_id'], downcast='integer')
 
 logging.info("Merging dataframes...")
-dataframe = pd.merge(playlist_tracks_df, tracks_df, on='track_id')
-dataframe = pd.merge(dataframe, playlists_df, on='playlist_id')
+dataframe = pd.merge(playlist_tracks_df, playlists_df, on='playlist_id')
+dataframe = pd.merge(dataframe, tracks_df, on='track_id')
 dataframe = pd.merge(dataframe, artists_df, on='artist_id')
+
+assert dataframe['playlist_id'].nunique() == SAMPLE_SIZE, 1
 
 # reorganizing order of columns
 dataframe = dataframe.reindex(columns=['playlist_id', 'playlist_name', 'track_id', 'track_name', 'track_uri', 'pos', 'artist_id', 'artist_name', 'artist_uri'])
