@@ -6,7 +6,7 @@ import logging
 from sklearn.model_selection import train_test_split
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-SAMPLE_SIZE = 10000 # no. of rows loaded (total = 1M)
+SAMPLE_SIZE = 100000 # no. of rows loaded (total = 1M)
 SRC_FOLDER = "formatted/dataset/"
 PLAYLIST_CSV = SRC_FOLDER + "playlists.csv"
 TRACK_CSV = SRC_FOLDER + "tracks.csv"
