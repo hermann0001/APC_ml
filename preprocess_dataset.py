@@ -4,9 +4,10 @@ import seaborn as sns
 from utils import normalize_name
 import gc
 from MetaSpotifyDataExtractor import get_spotify_metadata
-from sklearn.model_selection import train_test_split
+import logging
 
-SAMPLE_SIZE = 300000 # no. of rows loaded (total = 1M)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+SAMPLE_SIZE = 500000 # no. of rows loaded (total = 1M)
 SRC_FOLDER = "formatted/dataset/"
 PLAYLIST_CSV = SRC_FOLDER + "playlists.csv"
 TRACK_CSV = SRC_FOLDER + "tracks.csv"
@@ -14,7 +15,7 @@ ARTISTS_CSV = SRC_FOLDER + "artists.csv"
 PLAYLIST_TRACKS_CSV = SRC_FOLDER + "playlist_tracks.csv"
 
 def fill_nan_names(artist_df, tracks_df):
-    print("\nRetrieving metadata...")
+    logging.info("Retrieving metadata...")
     nan_track_name = tracks_df[tracks_df['track_name'].isna()]
     nan_artist_name = artist_df[artist_df['artist_name'].isna()]
 
@@ -28,39 +29,39 @@ def fill_nan_names(artist_df, tracks_df):
         if metadata:
             artist_df.at[index, 'artist_name'] = metadata['name']
 
-print("Reading csv...")    
+logging.info("Reading csv...")
 artists_df = pd.read_csv(ARTISTS_CSV)
 tracks_df = pd.read_csv(TRACK_CSV, usecols=['track_id', 'track_name', 'artist_id', 'track_uri'])
 playlists_df = pd.read_csv(PLAYLIST_CSV, usecols=['playlist_id', 'name'])
-playlist_tracks_df = pd.read_csv(PLAYLIST_TRACKS_CSV, usecols=['playlist_id', 'track_id', 'pos'])
+playlist_tracks_df = pd.read_csv(PLAYLIST_TRACKS_CSV, usecols=['playlist_id', 'track_id', 'pos'], nrows=SAMPLE_SIZE)
 
 # check duplicates in csv, todo: fix generation of csv
-print(f"\nplaylist_tracks_df duplicated rows: {playlist_tracks_df.duplicated().sum()}")
-print(f"tracks_df duplicated rows: {tracks_df.duplicated().sum()}")
-print(f"playlists_df duplicated rows: {playlists_df.duplicated().sum()}")
-print(f"artists_df duplicated rows: {artists_df.duplicated().sum()}")
+logging.info(f"\nplaylist_tracks_df duplicated rows: {playlist_tracks_df.duplicated().sum()}")
+logging.info(f"tracks_df duplicated rows: {tracks_df.duplicated().sum()}")
+logging.info(f"playlists_df duplicated rows: {playlists_df.duplicated().sum()}")
+logging.info(f"artists_df duplicated rows: {artists_df.duplicated().sum()}")
 
 tracks_df = tracks_df.drop_duplicates().reset_index(drop=True)
 artists_df = artists_df.drop_duplicates().reset_index(drop=True)
 
-print(f"tracks_df duplicated rows: {tracks_df.duplicated().sum()}")
-print(f"artists_df duplicated rows: {artists_df.duplicated().sum()}")
+logging.info(f"tracks_df duplicated rows: {tracks_df.duplicated().sum()}")
+logging.info(f"artists_df duplicated rows: {artists_df.duplicated().sum()}")
 
-playlists_df = playlists_df.rename(columns={'name' : 'playlist_name'})
+playlists_df = playlists_df.rename(columns={'name': 'playlist_name'})
 
 # count NaN and fill NaN
-print(f"\nNaN in artists_df: {artists_df.isna().sum()}")
-print(f"NaN in tracks_df: {tracks_df.isna().sum()}\n")
+logging.info(f"NaN in artists_df: {artists_df.isna().sum()}")
+logging.info(f"NaN in tracks_df: {tracks_df.isna().sum()}\n")
 fill_nan_names(artists_df, tracks_df)
-print(f"NaN in artists_df: {artists_df.isna().sum()}")
-print(f"NaN in tracks_df: {tracks_df.isna().sum()}")
+logging.info(f"NaN in artists_df: {artists_df.isna().sum()}")
+logging.info(f"NaN in tracks_df: {tracks_df.isna().sum()}")
 
-print("\nNormalizing text fields...")
+logging.info("Normalizing text fields...")
 playlists_df['playlist_name'] = playlists_df['playlist_name'].apply(normalize_name)
 tracks_df['track_name'] = tracks_df['track_name'].apply(normalize_name)
 artists_df['artist_name'] = artists_df['artist_name'].apply(normalize_name)
 
-print("\nDowncasting data types...")
+logging.info("Downcasting data types...")
 playlists_df['playlist_id'] = pd.to_numeric(playlists_df['playlist_id'], downcast='integer')
 tracks_df['artist_id'] = pd.to_numeric(tracks_df['artist_id'], downcast='integer')
 tracks_df['track_id'] = pd.to_numeric(tracks_df['track_id'], downcast='integer')
@@ -68,7 +69,7 @@ playlist_tracks_df['track_id'] = pd.to_numeric(playlist_tracks_df['track_id'], d
 playlist_tracks_df['pos'] = pd.to_numeric(playlist_tracks_df['pos'], downcast='integer')
 playlist_tracks_df['playlist_id'] = pd.to_numeric(playlist_tracks_df['playlist_id'], downcast='integer')
 
-print("\nMerging dataframes...")
+logging.info("Merging dataframes...")
 dataframe = pd.merge(playlist_tracks_df, tracks_df, on='track_id')
 dataframe = pd.merge(dataframe, playlists_df, on='playlist_id')
 dataframe = pd.merge(dataframe, artists_df, on='artist_id')
@@ -83,7 +84,7 @@ del playlist_tracks_df
 del artists_df
 gc.collect()
 
-print("\nSaving dataframe to disk...")
+logging.info("Saving dataframe to disk...")
 # Save the dataframe in high performance dataframe on disk
 dataframe.to_feather('formatted/dataset/dataframe.feather')
 

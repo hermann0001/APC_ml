@@ -71,18 +71,50 @@ songs_cluster['cluster'] = songs_cluster['cluster'].fillna(-1).astype(int).astyp
 
 # Visualization using t-SNE
 logging.info('Performing t-SNE visualization...')
-embedding_tsne = TSNE(n_components=2, metric='cosine', random_state=123).fit_transform(embedding_matrix)
+embedding_tsne_full = TSNE(n_components=2, metric='cosine', random_state=123).fit_transform(embedding_matrix)
 
 # Prepare DataFrame for plotting
-tsne_df = pd.DataFrame(embedding_tsne, columns=['x', 'y'])
-tsne_df['cluster'] = songs_cluster['cluster'].values
+tsne_df_full = pd.DataFrame(embedding_tsne_full, columns=['x', 'y'])
+tsne_df_full['cluster'] = songs_cluster['cluster'].values
 
 # Plotting
 plt.figure(figsize=(12, 8))
-sns.scatterplot(data=tsne_df, x='x', y='y', hue='cluster', palette='viridis', legend='full')
-plt.title('t-SNE Visualization of Song Clusters')
+sns.scatterplot(data=tsne_df_full, x='x', y='y', hue='cluster', palette='viridis', legend='full', alpha=0.7)
+plt.title('t-SNE Visualization of All Song Clusters')
 plt.xlabel('t-SNE Component 1')
 plt.ylabel('t-SNE Component 2')
-plt.savefig('figures/clustering.png')
+plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.savefig('figures/full-tsne.png')
+
+logging.info('Full t-SNE visualization completed.')
+
+# Step 2: Perform t-SNE on a random subset of clusters
+logging.info('Performing t-SNE visualization on a random subset of clusters...')
+
+# Randomly select 10 unique clusters
+unique_clusters = songs_cluster['cluster'].cat.categories
+selected_clusters = np.random.choice(unique_clusters[unique_clusters != -1], size=10, replace=False)
+
+# Filter embeddings for the selected clusters
+filtered_indices = songs_cluster[songs_cluster['cluster'].isin(selected_clusters)].index
+filtered_embeddings = embedding_matrix[[model.wv.key_to_index[key] for key in filtered_indices]]
+
+# Perform t-SNE on the filtered embeddings
+embedding_tsne_filtered = TSNE(n_components=2, metric='cosine', random_state=123).fit_transform(filtered_embeddings)
+
+# Prepare DataFrame for plotting
+tsne_df_filtered = pd.DataFrame(embedding_tsne_filtered, columns=['x', 'y'])
+tsne_df_filtered['cluster'] = songs_cluster.loc[filtered_indices, 'cluster'].values
+
+# Plotting
+plt.figure(figsize=(12, 8))
+sns.scatterplot(data=tsne_df_filtered, x='x', y='y', hue='cluster', palette='viridis', legend='full', alpha=0.7)
+plt.title('t-SNE Visualization of Selected Song Clusters')
+plt.xlabel('t-SNE Component 1')
+plt.ylabel('t-SNE Component 2')
+plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.savefig('figures/selected-tsne.png')
+
+logging.info('t-SNE visualization for selected clusters completed.')
 
 logging.info(f"The optimal number of clusters (elbow point) is: {k_opt + 10}")  # Adjust index since we started from 10

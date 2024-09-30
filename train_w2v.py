@@ -16,7 +16,7 @@ timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')  # Format: YYYYMMDD_HHMMSS
 log_filename = f'training_log_{timestamp}.txt'  # Log file name with timestamp
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-file_handler = logging.FileHandler(log_filename)
+file_handler = logging.FileHandler(MDL_FOLDER + log_filename)
 file_handler.setFormatter(logging.Formatter('%(asctime)s : %(levelname)s : %(message)s'))
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter('%(asctime)s : %(levelname)s : %(message)s'))
