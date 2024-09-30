@@ -2,47 +2,36 @@ import re
 import matplotlib.pyplot as plt
 
 #questo po essere sostituito dalla lettura di un file
-log_data = """
-2024-09-30 16:08:39,844 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 0 Loss: 2607191.5
-2024-09-30 16:09:51,501 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 1 Loss: 1528017.0
-2024-09-30 16:11:03,411 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 2 Loss: 1077799.5
-2024-09-30 16:12:18,157 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 3 Loss: 829637.0
-2024-09-30 16:13:32,578 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 4 Loss: 740520.5
-2024-09-30 16:14:45,295 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 5 Loss: 655565.0
-2024-09-30 16:15:59,520 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 6 Loss: 600685.5
-2024-09-30 16:17:14,116 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 7 Loss: 508818.0
-2024-09-30 16:18:30,149 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 8 Loss: 444843.0
-2024-09-30 16:19:44,982 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 9 Loss: 390256.0
-2024-09-30 16:20:59,229 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 10 Loss: 377123.0
-2024-09-30 16:22:15,898 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 11 Loss: 358812.0
-2024-09-30 16:23:29,197 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 12 Loss: 328800.0
-2024-09-30 16:24:44,123 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 13 Loss: 316216.0
-2024-09-30 16:25:59,086 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 14 Loss: 263313.0
-2024-09-30 16:27:13,776 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 15 Loss: 268345.0
-2024-09-30 16:28:29,692 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 16 Loss: 269982.0
-2024-09-30 16:29:43,974 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 17 Loss: 240035.0
-2024-09-30 16:31:00,225 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 18 Loss: 238494.0
-2024-09-30 16:32:18,000 : INFO : Model Word2Vec<vocab=17424091, vector_size=200, alpha=0.1> - Epoch 19 Loss: 223805.0
-"""
+log_data = {0: 42154.28515625, 1: 42438.16015625, 2: 41898.90625, 3: 42399.6796875, 4: 42318.171875, 5: 42300.40625, 6: 42904.703125, 7: 42723.9375, 8: 42930.9375, 9: 42987.0, 10: 43090.5, 
+            11: 42844.6875, 12: 41749.75, 13: 40953.0, 14: 41237.625, 15: 41216.3125, 16: 40734.375, 17: 41052.0, 18: 41217.0, 19: 41146.875, 20: 41192.25, 
+            21: 40779.0625, 22: 40981.875, 23: 40928.25, 24: 40734.375, 25: 44658.125, 26: 44995.5, 27: 44796.375, 28: 44640.0, 29: 44914.5, 30: 44520.625, 
+            31: 44964.0, 32: 44410.5, 33: 44905.5, 34: 44986.5, 35: 45000.0, 36: 44968.5, 37: 44977.5, 38: 44671.5, 39: 44977.5, 40: 44887.5, 
+            41: 44714.0, 42: 44778.5, 43: 44743.5, 44: 44711.875, 45: 44216.125, 46: 44242.25, 47: 44878.5, 48: 44973.25, 49: 44721.5, 50: 44460.75, 
+            51: 43599.75, 52: 42915.25, 53: 40900.0, 54: 38372.75, 55: 35350.5, 56: 33821.0, 57: 34183.0, 58: 34098.5, 59: 34442.0, 60: 34597.25, 
+            61: 34356.75, 62: 33797.75, 63: 33300.75, 64: 32800.0, 65: 31830.75, 66: 31097.75, 67: 30264.0, 68: 29085.75, 69: 28225.0, 70: 28021.25, 
+            71: 27716.25, 72: 27778.5, 73: 27679.5, 74: 27930.5, 75: 27744.25, 76: 27695.25, 77: 27916.5, 78: 27945.25, 79: 28132.25, 80: 28065.25,
+              81: 28148.25, 82: 28059.5, 83: 28278.75, 84: 28263.5, 85: 28226.0, 86: 28200.0, 87: 28424.0, 88: 28475.75, 89: 28338.25, 90: 28523.5, 
+              91: 28480.5, 92: 28414.75, 93: 28597.75, 94: 28435.25, 95: 28635.5, 96: 28343.0, 97: 28590.75, 98: 28516.25, 99: 28597.5}
 
-pattern = r"Epoch (\d+) Loss: ([\d.]+)"
-matches = re.findall(pattern, log_data)
+#pattern = r"(\d+): ([\d.,]+)"
+#matches = re.findall(pattern, log_data)
 
-epochs = [int(match[0]) for match in matches]
-losses = [float(match[1]) for match in matches]
+epochs = list(log_data.keys())
+losses = list(log_data.values())
 
-plt.figure(figsize=(10,6))
-plt.plot(epochs, losses, marker='o', linestyle='-', color='b')
+# Creazione del grafico
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(epochs, losses, marker='o', linestyle='-', color='b')
 
-plt.xlabel=('Epoch')
-plt.ylabel=('Loss')
-plt.xticks(epochs)  
-plt.title=('Word2Vec Training Loss over Epochs')
-plt.grid(True)
+# Aggiungi etichette e titolo
+fig.suptitle(r'Loss function per $\alpha = 0.1$', fontsize=14, fontweight='bold') # Titolo con la lettera greca alpha
+ax.grid(True)
 
-plt.text(20, losses[-1] * 0.05, 'EPOCHS', ha='center') 
-plt.text(-1.5, max(losses) * 1.05, 'LOSS', va='center', rotation='vertical')
-plt.text(4, losses[-1]*12.5, r'Loss function per $\alpha = 0.1$',fontsize='xx-large')
+# Imposta i tick sull'asse X ogni 10 epoche
+ax.set_xticks(range(0, 101, 10))  # Mostra solo i numeri da 0 a 100 con step di 10
 
+# Imposta le etichette degli assi
+ax.set_xlabel('EPOCHS')  # Etichetta asse X
+ax.set_ylabel('LOSS')    # Etichetta asse Y
 #plt.show()
-plt.savefig('figures/w2v_loss_plot.png')
+plt.savefig('figures/w2v_loss_plot2.png')
