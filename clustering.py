@@ -10,6 +10,8 @@ import logging
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 model = Word2Vec.load(MDL_FOLDER + 'w2v/w2v-trained-model.model')
 
 embedding_matrix = model.wv[model.wv.index_to_key]
