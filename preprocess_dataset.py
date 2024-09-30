@@ -3,9 +3,10 @@ from utils import normalize_name
 import gc
 from MetaSpotifyDataExtractor import get_spotify_metadata
 import logging
+from sklearn.model_selection import train_test_split
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-SAMPLE_SIZE = 10000 # no. of rows loaded (total = 1M)
+SAMPLE_SIZE = 100000 # no. of rows loaded (total = 1M)
 SRC_FOLDER = "formatted/dataset/"
 PLAYLIST_CSV = SRC_FOLDER + "playlists.csv"
 TRACK_CSV = SRC_FOLDER + "tracks.csv"
@@ -85,8 +86,24 @@ del artists_df
 gc.collect()
 
 logging.info("Saving dataframe to disk...")
+
 # Save the dataframe in high performance dataframe on disk
 dataframe.to_feather('formatted/dataset/dataframe.feather')
+
+logging.info("Splitting train and test set...")
+
+playlist_documents = dataframe.groupby('playlist_id').agg(
+    {
+        'track_id': lambda x: list(x),
+        'artist_id': lambda x: list(x),
+        'pos': lambda x: list(x)
+    }
+).reset_index()
+
+train, test = train_test_split(playlist_documents, test_size=0.2, random_state=666)
+
+train.to_feather(SRC_FOLDER + "train.feather")
+test.to_feather(SRC_FOLDER + "test.feather")
 
 ######################################################  <--- MOVE THIS PART TO ANOTHER FILE
 

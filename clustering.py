@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from gensim.models import Word2Vec
 import logging
+from datetime import datetime
 
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
@@ -75,6 +76,7 @@ k_opt = locate_optimal_elbow(skm_df['n_clusters'], skm_df['WCSS'])
 skm_opt_labels = spherical_kmeans(embedding_matrix, k_opt)
 
 # After calculating WCSS
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 plt.figure(figsize=(10, 6))
 plt.plot(range(10, 501, 10), wcss, marker='o')
 plt.title('Elbow Method for Optimal k')
@@ -82,7 +84,7 @@ plt.xlabel('Number of clusters')
 plt.ylabel('Within-Cluster Sum of Squares (WCSS)')
 plt.axvline(x=k_opt + 10, linestyle='--', color='red', label='Optimal k')
 plt.legend()
-plt.savefig('figures/elbow_method.png')
+plt.savefig(f'figures/elbow_method_{timestamp}.png')
 
 # Prepare the DataFrame for songs with their clusters
 songs_cluster = pd.DataFrame(index=model.wv.index_to_key, columns=['cluster'])
@@ -104,7 +106,7 @@ plt.title('t-SNE Visualization of All Song Clusters')
 plt.xlabel('t-SNE Component 1')
 plt.ylabel('t-SNE Component 2')
 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-plt.savefig('figures/full-tsne.png')
+plt.savefig(f'figures/full-tsne_{timestamp}.png')
 
 logging.info('Full t-SNE visualization completed.')
 
@@ -133,7 +135,7 @@ plt.title('t-SNE Visualization of Selected Song Clusters')
 plt.xlabel('t-SNE Component 1')
 plt.ylabel('t-SNE Component 2')
 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-plt.savefig('figures/selected-tsne.png')
+plt.savefig(f'figures/selected-tsne_{timestamp}.png')
 
 logging.info('t-SNE visualization for selected clusters completed.')
 

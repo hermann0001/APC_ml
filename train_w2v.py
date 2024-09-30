@@ -41,7 +41,7 @@ model.build_vocab(train_data)
 loss_logger = LossLogger()
 model.train(train_data, total_examples=model.corpus_count, epochs=model.epochs,  compute_loss=True, callbacks=[loss_logger])
 
-model.save(MDL_FOLDER + 'w2v-trained-model.model')
+model.save(MDL_FOLDER + f'w2v/w2v-trained-model-{timestamp}.model')
 logger.info("Model trained and saved")
 
 # Epoch 0 Loss: 16777216.0
