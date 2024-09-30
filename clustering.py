@@ -61,14 +61,14 @@ def locate_optimal_elbow(x, y):
 
 
 wcss = []  # List to hold Within-Cluster Sum of Squares (WCSS)
-for n_clusters in range(10, 51, 10):  # Iterate over number of clusters
+for n_clusters in range(10, 201, 10):  # Iterate over number of clusters
     logging.info(f'Calculating WCSS for {n_clusters} clusters.')
     labels = spherical_kmeans(embedding_matrix, n_clusters)
     # Calculate WCSS
     wcss.append(sum((np.linalg.norm(embedding_matrix[labels == i] - np.mean(embedding_matrix[labels == i], axis=0)))**2 for i in range(n_clusters)))
 
 # Create DataFrame to analyze WCSS
-skm_df = pd.DataFrame({'WCSS': wcss, 'n_clusters': range(10, 151, 10)})
+skm_df = pd.DataFrame({'WCSS': wcss, 'n_clusters': range(10, 201, 10)})
 
 # Locate optimal elbow
 k_opt = locate_optimal_elbow(skm_df['n_clusters'], skm_df['WCSS'])
