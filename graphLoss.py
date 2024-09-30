@@ -45,4 +45,4 @@ plt.text(-1.5, max(losses) * 1.05, 'LOSS', va='center', rotation='vertical')
 plt.text(4, losses[-1]*12.5, "Loss function per alpha = 0.1",fontsize='xx-large')
 
 #plt.show()
-plt.savefig('w2v_loss_plot.png')
+plt.savefig('figures/w2v_loss_plot.png')
