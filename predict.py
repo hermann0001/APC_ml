@@ -3,17 +3,16 @@ import numpy as np
 import argparse
 from gensim.models import Doc2Vec, Word2Vec
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
+from sklearn.preprocessing import LabelBinarizer
+from collections import OrderedDict
+
 
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
 
-def get_recommendations(model, test_set, top_n=10):    
-    predictions = {}
-    
-    for index, row in test_set.iterrows():
-        playlist_id = row['playlist_id']
+def get_recommendations(model, test_set, top_n=10): 
+    def predict_for_playlist(row):
         tracklist = row['track_id']
-        
         predicted_tracks = []
 
         for track in tracklist:
@@ -24,9 +23,10 @@ def get_recommendations(model, test_set, top_n=10):
                 similar_tracks = model.dv.most_similar(track, top_n)
                 predicted_tracks.extend([t[0] for t in similar_tracks])
 
-        predictions[playlist_id] = list(set(predicted_tracks))
+        return list(OrderedDict.fromkeys(predicted_tracks))
 
-    return predictions
+    test_set['predicted_tracks'] = test_set.apply(predict_for_playlist, axis=1)
+    return test_set[['playlist_id', 'predicted_tracks']]
 
 def calculate_metrics(ground_truth, predictions):
     # Initialize lists to hold true labels and predictions
@@ -45,15 +45,18 @@ def calculate_metrics(ground_truth, predictions):
         y_true.extend(actual_tracks)
         y_pred.extend(predicted_tracks)
 
+    lb = LabelBinarizer()
+    y_true_bin = lb.fit_transform(y_true)
+    y_pred_bin = lb.fit_transform(y_pred)
     # Calculate metrics
     print("Calculating precision")
-    precision = precision_score(y_true, y_pred, average='binary')
+    precision = precision_score(y_true_bin, y_pred_bin, average='macro')
     print("Calculating recall")
-    recall = recall_score(y_true, y_pred, average='binary')
+    recall = recall_score(y_true_bin, y_pred_bin, average='macro')
     print("Calculating f1 score")
-    f1 = f1_score(y_true, y_pred, average='binary')
+    f1 = f1_score(y_true_bin, y_pred_bin, average='macro')
     print("Calculating accuracy")
-    accuracy = accuracy_score(y_true, y_pred, average='binary')
+    accuracy = accuracy_score(y_true_bin, y_pred_bin, average='macro')
     print("Calculating r_precision")
     r_precision = r_precision_score(predictions, ground_truth)
     print("Calculating ndcg")
