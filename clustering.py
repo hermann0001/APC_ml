@@ -74,3 +74,5 @@ plt.title('t-SNE Visualization of Song Clusters')
 plt.xlabel('t-SNE Component 1')
 plt.ylabel('t-SNE Component 2')
 plt.savefig('figures/clustering.png')
+
+print(f"The optimal number of clusters (elbow point) is: {k_opt + 10}")  # Adjust index since we started from 10
