@@ -142,7 +142,7 @@ def load_model(model_type):
     if model_type == 'D2V':
         return Doc2Vec.load(MDL_FOLDER + 'd2v/d2v-trained-model.model')
     elif model_type == 'W2V':
-        return Word2Vec.load(MDL_FOLDER + 'w2v/w2v-trained-model.model')
+        return Word2Vec.load(MDL_FOLDER + 'w2v/w2v-trained-model-20241001_165715.model')
     else:
         raise ValueError("Invalid model type, use: 'W2V' or 'D2V'")
 
