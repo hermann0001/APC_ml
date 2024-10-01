@@ -132,5 +132,3 @@ plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 plt.savefig(f'figures/selected-tsne_{timestamp}.png')
 
 logging.info('t-SNE visualization for selected clusters completed.')
-
-logging.info(f"The optimal number of clusters (elbow point) is: {k_opt + 10}")  # Adjust index since we started from 10
