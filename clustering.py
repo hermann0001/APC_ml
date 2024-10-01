@@ -116,7 +116,7 @@ filtered_indices = songs_cluster[songs_cluster['cluster'].isin(selected_clusters
 filtered_embeddings = embedding_matrix[[model.wv.key_to_index[key] for key in filtered_indices]]
 
 # Perform t-SNE on the filtered embeddings
-embedding_tsne_filtered = cuTSNE(n_components=2,perplexity=30, n_iter=1000, metric='cosine', random_state=123).fit_transform(filtered_embeddings)
+embedding_tsne_filtered = cuTSNE(n_components=2,perplexity=10, n_iter=1000, metric='cosine', random_state=123).fit_transform(filtered_embeddings)
 
 # Prepare DataFrame for plotting
 tsne_df_filtered = pd.DataFrame(embedding_tsne_filtered, columns=['x', 'y'])
@@ -130,5 +130,12 @@ plt.xlabel('t-SNE Component 1')
 plt.ylabel('t-SNE Component 2')
 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 plt.savefig(f'figures/selected-tsne_{timestamp}.png')
+
+# Filter out specific t-SNE component ranges for zooming in
+subset = tsne_df_filtered[(tsne_df_filtered[:, 0] > -1000) & (tsne_df_filtered[:, 0] < 1000)]
+
+plt.scatter(subset[:, 0], subset[:, 1], c=selected_clusters, cmap='tab10')
+plt.title("Zoomed-in t-SNE Selected Visualization")
+plt.show()
 
 logging.info('t-SNE visualization for selected clusters completed.')
