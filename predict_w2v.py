@@ -136,13 +136,13 @@ def build_ground_truth(df):
     
     return pd.DataFrame(ground_truth, columns=['playlist_id', 'actual_track_ids'])
 
-def load_model(model_type):
+def load_model(model_type, model_timestamp):
     files = os.listdir(MDL_FOLDER)
 
     if model_type == 'D2V':
-        return Doc2Vec.load(MDL_FOLDER + 'd2v/d2v-trained-model.model')
+        return Doc2Vec.load(MDL_FOLDER + f'd2v/d2v-trained-model-{model_timestamp}.model')
     elif model_type == 'W2V':
-        return Word2Vec.load(MDL_FOLDER + 'w2v/w2v-trained-model-20241001_165715.model')
+        return Word2Vec.load(MDL_FOLDER + f'w2v/w2v-trained-model-{model_timestamp}.model')
     else:
         raise ValueError("Invalid model type, use: 'W2V' or 'D2V'")
 
@@ -170,8 +170,8 @@ def leave_one_out_evaluation(model, test_set, top_n):
     return average_hit_rate
 
 
-def main(model_type, playlist_id=None, track_id=None):
-    model = load_model(model_type)
+def main(model_type, playlist_id=None, track_id=None, model_timestamp=None):
+    model = load_model(model_type, model_timestamp)
     logging.info(f"Model loaded: {model_type}")
     
     test_set = pd.read_feather(SRC_FOLDER + 'test.feather')
@@ -196,6 +196,7 @@ def main(model_type, playlist_id=None, track_id=None):
     logging.info(f'Accuracy: {accuracy:.4f}')
     logging.info(f'Precision: {precision:.4f}')
     logging.info(f'Recall: {recall:.4f}')
+    logging.info(f'F1 Score: {f1:.4f}')
     logging.info(f'R-Precision: {r_precision:.4f}')
     logging.info(f'NDCG: {ndcg:.4f}')
 
@@ -208,6 +209,7 @@ if __name__ == '__main__':
     parser.add_argument('--use-model', type=str, required=True, choices=['W2V', 'D2V'], help='Specify the model to use: \'W2V\' or \'D2V\'')
     parser.add_argument('--playlist-id', type=int, help='Specify a playlist ID to get recommendations')
     parser.add_argument('--track-id', type=int, help='Specify a track ID to find similar tracks')
+    parser.add_argument('--model-timestamp', type=str, help='Specify a the model to use')
 
     args = parser.parse_args()
-    main(args.use_model, playlist_id=args.playlist_id, track_id=args.track_id)
+    main(args.use_model, playlist_id=args.playlist_id, track_id=args.track_id, model_timestamp=args.model_timestamp)
