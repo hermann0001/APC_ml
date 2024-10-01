@@ -18,7 +18,7 @@ documents = []
 for _, row in train_playlists.iterrows():
     playlist_id = str(row['playlist_id'])
     
-    words=[f"{track}_{artist}_{pos}" for track, artist, pos in zip(row['track_id'], row['artist_id'], row['pos'])]
+    words=[f"{track}" for track in row['track_id']]
 
     documents.append(TaggedDocument(words=words, tags=[playlist_id]))
 
@@ -32,7 +32,7 @@ for _, row in train_playlists.iterrows():
 # workers:      Quanti processori lavorano parallelamente al training
 # epoch:        Numero di iterazioni sull'intero corpus
 # dm:           controlla l'algoritmo di training, per dm=1 usiamo Distributed Memory(DM), simile al modello Continuos Bag of Words (CBOW) usato per Word2Vec, per dm=0 si usa il Distributed Bag of Words(DBOW) simile al modello skip-gram per word2vec
-model = Doc2Vec(vector_size=256, window=5, min_count=5, workers=multiprocessing.cpu_count(), epochs=10, dm=1, negative=5)
+model = Doc2Vec(vector_size=30, window=5, min_count=5, workers=multiprocessing.cpu_count(), epochs=10, dm=1, negative=5)
 
 # Addestra il modello
 model.build_vocab(documents)  # Costruisci il vocabolario
