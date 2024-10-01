@@ -82,7 +82,8 @@ for n_clusters in range(10, 401, 10):  # Iterate over number of clusters
 skm_df = pd.DataFrame({'WCSS': wcss, 'n_clusters': range(10, 401, 10)})
 
 # Locate optimal elbow
-k_opt = locate_optimal_elbow(skm_df['n_clusters'], skm_df['WCSS'])
+#k_opt = locate_optimal_elbow(skm_df['n_clusters'], skm_df['WCSS'])
+k_opt = 100
 skm_opt_labels, _, _ = spherical_kmeans(embedding_matrix, k_opt)
 
 # Plot Elbow Method
@@ -92,7 +93,7 @@ plt.plot(range(10, 401, 10), wcss, marker='o')
 plt.title('Elbow Method for Optimal k')
 plt.xlabel('Number of clusters')
 plt.ylabel('Within-Cluster Sum of Squares (WCSS)')
-plt.axvline(x=k_opt + 10, linestyle='--', color='red', label='Optimal k')
+plt.axvline(x=k_opt, linestyle='--', color='red', label='Optimal k')
 plt.legend()
 plt.savefig(f'figures/elbow_method_{timestamp}.png')
 
@@ -125,14 +126,14 @@ logging.info('Performing t-SNE visualization on a random subset of clusters...')
 
 # Randomly select 10 unique clusters
 unique_clusters = songs_cluster['cluster'].cat.categories
-selected_clusters = np.random.choice(unique_clusters[unique_clusters != -1], size=5, replace=False)
+selected_clusters = np.random.choice(unique_clusters[unique_clusters != -1], size=10, replace=False)
 
 # Filter embeddings for the selected clusters
 filtered_indices = songs_cluster[songs_cluster['cluster'].isin(selected_clusters)].index
 filtered_embeddings = embedding_matrix[[model.wv.key_to_index[key] for key in filtered_indices]]
 
 # Perform t-SNE on the filtered embeddings
-embedding_tsne_filtered = cuTSNE(n_components=2, perplexity=10, n_iter=1000, metric='cosine', random_state=123).fit_transform(filtered_embeddings)
+embedding_tsne_filtered = cuTSNE(n_components=2, perplexity=30, n_iter=1000, metric='cosine', random_state=123).fit_transform(filtered_embeddings)
 
 # Prepare DataFrame for plotting
 tsne_df_filtered = pd.DataFrame(embedding_tsne_filtered, columns=['x', 'y'])

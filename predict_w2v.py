@@ -209,7 +209,7 @@ if __name__ == '__main__':
     parser.add_argument('--use-model', type=str, required=True, choices=['W2V', 'D2V'], help='Specify the model to use: \'W2V\' or \'D2V\'')
     parser.add_argument('--playlist-id', type=int, help='Specify a playlist ID to get recommendations')
     parser.add_argument('--track-id', type=int, help='Specify a track ID to find similar tracks')
-    parser.add_argument('--model-timestamp', type=str, help='Specify a the model to use')
+    parser.add_argument('--model-timestamp', required=True , type=str, help='Specify a the model to use')
 
     args = parser.parse_args()
     main(args.use_model, playlist_id=args.playlist_id, track_id=args.track_id, model_timestamp=args.model_timestamp)
