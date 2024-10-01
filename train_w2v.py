@@ -16,7 +16,7 @@ timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')  # Format: YYYYMMDD_HHMMSS
 log_filename = f'training_log_{timestamp}.txt'  # Log file name with timestamp
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-file_handler = logging.FileHandler(log_filename)
+file_handler = logging.FileHandler(MDL_FOLDER + log_filename)
 file_handler.setFormatter(logging.Formatter('%(asctime)s : %(levelname)s : %(message)s'))
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter('%(asctime)s : %(levelname)s : %(message)s'))
@@ -35,15 +35,13 @@ logger.info("Loaded train data...")
 #####################################
 
 # Train Word2Vec model
-model = Word2Vec(vector_size=400, window=20, min_count=1, workers=multiprocessing.cpu_count(), epochs=20, sg=0, negative=5, alpha=0.1)
+model = Word2Vec(vector_size=300, window=20, min_count=1, workers=multiprocessing.cpu_count(), epochs=100, sg=0, negative=5)
 model.build_vocab(train_data)
 
 loss_logger = LossLogger()
 model.train(train_data, total_examples=model.corpus_count, epochs=model.epochs,  compute_loss=True, callbacks=[loss_logger])
 
-logger.info(f"Losses: {loss_logger.losses}")
-
-model.save(MDL_FOLDER + 'w2v-trained-model.model')
+model.save(MDL_FOLDER + f'w2v/w2v-trained-model-{timestamp}.model')
 logger.info("Model trained and saved")
 
 # Epoch 0 Loss: 16777216.0
