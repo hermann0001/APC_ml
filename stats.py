@@ -29,7 +29,6 @@ def artist_heterogeneity(playlist_tracks):
         return np.log2(unique_tracks/unique_artists)
     else:
         return np.nan
-
 def compute_metrics(df_playlists_tracks):
     playlist_metrics = []
     results = {'playlist_id': [], 'sample_type': [], 'artist_heterogeneity': []}
@@ -59,11 +58,7 @@ def compute_metrics(df_playlists_tracks):
         second_half_artists = set(artist_ids[half_index:])
         jaccard_similarity = len(first_half_artists & second_half_artists) / len(first_half_artists | second_half_artists) if len(first_half_artists | second_half_artists) > 0 else 0
 
-
-        #CARINA DA METTERE PER MANNO:
-
-
-        # Artist heterogeneity
+        # Calcolo dell'eterogeneità artistica
         heterogeneity_order = artist_heterogeneity(group.head(30))
         if len(group) > 30:
             random_tracks = group.sample(30)
@@ -72,12 +67,15 @@ def compute_metrics(df_playlists_tracks):
         heterogeneity_random = artist_heterogeneity(random_tracks)
         heterogeneity_total = artist_heterogeneity(group)
 
+        # Aggiungi dati al dizionario results per ogni tipo di campione
         results['playlist_id'].append(playlist_id)
         results['sample_type'].append('First 30 Tracks')
         results['artist_heterogeneity'].append(heterogeneity_order)        
+
         results['playlist_id'].append(playlist_id)
         results['sample_type'].append('Random 30 Tracks')
         results['artist_heterogeneity'].append(heterogeneity_random)
+
         results['playlist_id'].append(playlist_id)
         results['sample_type'].append('Entire Playlist')
         results['artist_heterogeneity'].append(heterogeneity_total)
@@ -91,53 +89,55 @@ def compute_metrics(df_playlists_tracks):
             'concentration_index': concentration_index,
             'gini_coefficient': artist_gini,
             'jaccard_similarity': jaccard_similarity,
-            'artist_heterogeneity': results
         })
 
-    return playlist_metrics
+    # Dopo aver raccolto tutte le metriche, trasformiamo `results` in un DataFrame
+    heterogeneity_df = pd.DataFrame(results)
 
-def plot_metrics(df_playlist_metrics):
+    return playlist_metrics, heterogeneity_df
+
+def plot_metrics(df_playlist_metrics, arH):
     # Set up the plotting style
     sns.set_theme(style="whitegrid")
-    plt.figure(figsize=(16, 12))
+    plt.figure(figsize=(18, 12))
 
     # 1. Histogram of Unique Artists per Playlist
     plt.subplot(3, 2, 1)
-    sns.histplot(df_playlist_metrics['unique_artists'], bins=30, kde=True, color='skyblue')
+    sns.histplot(df_playlist_metrics['unique_artists'], bins=30, kde=True, color='steelblue', edgecolor='black', alpha=0.7)
     plt.title('Distribution of Unique Artists per Playlist')
     plt.xlabel('Unique Artists')
     plt.ylabel('Frequency')
 
     # 2. Histogram of Unique Tracks per Playlist
     plt.subplot(3, 2, 2)
-    sns.histplot(df_playlist_metrics['unique_tracks'], bins=30, kde=True, color='skyblue')
+    sns.histplot(df_playlist_metrics['unique_tracks'], bins=30, kde=True, color='mediumseagreen', edgecolor='black', alpha=0.7)
     plt.title('Distribution of Unique Tracks per Playlist')
     plt.xlabel('Unique Tracks')
     plt.ylabel('Frequency')
 
     # 3. Histogram of Gini Coefficients
     plt.subplot(3, 2, 3)
-    sns.histplot(df_playlist_metrics['gini_coefficient'], bins=30, kde=True, color='orange')
+    sns.histplot(df_playlist_metrics['gini_coefficient'], bins=30, kde=True, color='darkorange', edgecolor='black', alpha=0.7)
     plt.title('Distribution of Gini Coefficients')
     plt.xlabel('Gini Coefficient')
     plt.ylabel('Frequency')
 
     # 4. Box Plot: Repeat Rate Distribution
     plt.subplot(3, 2, 4)
-    sns.boxplot(x=df_playlist_metrics['repeat_rate'], color='green')
+    sns.boxplot(x=df_playlist_metrics['repeat_rate'], color='lightcoral', linewidth=2)
     plt.title('Repeat Rate Distribution')
     plt.xlabel('Repeat Rate')
 
     # 5. Scatter Plot: Concentration Index vs Gini Coefficient
     plt.subplot(3, 2, 5)
-    sns.scatterplot(x='concentration_index', y='gini_coefficient', data=df_playlist_metrics, color='red')
+    sns.scatterplot(x='concentration_index', y='gini_coefficient', data=df_playlist_metrics, s=100, color='royalblue', alpha=0.7)
     plt.title('Concentration Index vs Gini Coefficient')
     plt.xlabel('Concentration Index')
     plt.ylabel('Gini Coefficient')
 
     # 6. Histogram of Jaccard Similarities
     plt.subplot(3, 2, 6)
-    sns.histplot(df_playlist_metrics['jaccard_similarity'], bins=30, kde=True, color='brown')
+    sns.histplot(df_playlist_metrics['jaccard_similarity'], bins=30, kde=True, color='tomato', edgecolor='black', alpha=0.7)
     plt.title('Distribution of Jaccard Similarities')
     plt.xlabel('Jaccard Similarity')
     plt.ylabel('Frequency')
@@ -145,15 +145,14 @@ def plot_metrics(df_playlist_metrics):
     plt.tight_layout()
     plt.savefig(FIGURE_FOLDER + 'metrics.png')
 
-    arH = pd.DataFrame(df_playlist_metrics['artist_heterogeneity'])
-    print(arH)
-    # Scatter Plot: Artist Heterogenity
-    plt.figure(figsize=(12,6))
-    sns.boxplot(x='sample_type', y='artist_heterogeneity', data=arH,  color='purple')
+    # Usa il DataFrame arH per il boxplot dell'eterogeneità artistica
+    plt.figure(figsize=(14, 8))
+    sns.boxplot(x='sample_type', y='artist_heterogeneity', data=arH, hue='sample_type', palette='coolwarm', linewidth=2.5, fliersize=3, dodge=False)
     plt.title('Artist Heterogeneity by Sampling Method')
     plt.xlabel('Sampling Method')
     plt.ylabel('Artist Heterogeneity')
     plt.savefig(FIGURE_FOLDER + 'artist_heterogeneity.png')
+
 
 def reduce_size(dataframe):
     print("Original DataFrame")
@@ -193,8 +192,8 @@ if __name__ == '__main__':
     df_playlists = reduce_size(df_playlists)
     df_playlists_tracks = reduce_size(df_playlists_tracks)
 
-    playlist_metrics = compute_metrics(df_playlists_tracks)
+    playlist_metrics, arH = compute_metrics(df_playlists_tracks)
     df_playlist_metrics = pd.DataFrame(playlist_metrics)
     
-    plot_metrics(df_playlist_metrics)
+    plot_metrics(df_playlist_metrics, arH)
 
