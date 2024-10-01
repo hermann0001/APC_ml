@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import argparse
+import os
 import logging
 from gensim.models import Doc2Vec, Word2Vec
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
@@ -12,6 +13,14 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Constants
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
+dataset = pd.read_feather(SRC_FOLDER + 'dataframe.feather')
+
+def retrieve_song_info(track_ids):
+    info = []
+    info.append(dataset[dataset['track_id'] == tid] for tid in track_ids)
+    return info
+
+        
 
 
 def mean_vectors(tracks, model):
@@ -120,6 +129,8 @@ def build_ground_truth(df):
 
 
 def load_model(model_type):
+    files = os.listdir(MDL_FOLDER)
+
     if model_type == 'D2V':
         return Doc2Vec.load(MDL_FOLDER + 'd2v/d2v-trained-model.model')
     elif model_type == 'W2V':
@@ -163,6 +174,7 @@ def main(model_type, playlist_id=None, track_id=None):
         logging.info(f"Recommended tracks for playlist {playlist_id}: {recommendations}")
     elif track_id is not None:
         logging.info(f"Finding similar tracks for track ID: {track_id}")
+        retrieve_track_info(track_id)
         similar_tracks = get_similar_tracks(model, track_id, top_n=10)
         logging.info(f"Similar tracks to {track_id}: {similar_tracks}")
     else:
