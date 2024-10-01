@@ -22,7 +22,7 @@ def retrieve_track_info(track_ids):
 
     # Search for each track_id in the DataFrame and print the results
     for track_id in track_ids:
-        result = dataset[dataset['track_id'] == track_id]
+        result = dataset[dataset['track_id'] == int(track_id)]
 
         if not result.empty:
             track_name = result['track_name'].values[0]
@@ -206,8 +206,8 @@ def main(model_type, playlist_id=None, track_id=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Get recommendations for a playlist or similar tracks for a given track.')
     parser.add_argument('--use-model', type=str, required=True, choices=['W2V', 'D2V'], help='Specify the model to use: \'W2V\' or \'D2V\'')
-    parser.add_argument('--playlist-id', type=str, help='Specify a playlist ID to get recommendations')
-    parser.add_argument('--track-id', type=str, help='Specify a track ID to find similar tracks')
+    parser.add_argument('--playlist-id', type=int, help='Specify a playlist ID to get recommendations')
+    parser.add_argument('--track-id', type=int, help='Specify a track ID to find similar tracks')
 
     args = parser.parse_args()
     main(args.use_model, playlist_id=args.playlist_id, track_id=args.track_id)
