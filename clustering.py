@@ -72,6 +72,7 @@ def locate_optimal_elbow(x, y):
     return elbow_index
 
 # Calculate Within-Cluster Sum of Squares (WCSS)
+
 wcss = []  # List to hold Within-Cluster Sum of Squares (WCSS)
 for n_clusters in range(10, 401, 10):  # Iterate over number of clusters
     logging.info(f'Calculating WCSS for {n_clusters} clusters.')
@@ -153,6 +154,6 @@ subset = tsne_df_filtered[(tsne_df_filtered['x'] > -1000) & (tsne_df_filtered['x
 
 plt.scatter(subset['x'], subset['y'], c=subset['cluster'].cat.codes, cmap='tab10')
 plt.title("Zoomed-in t-SNE Selected Visualization")
-plt.show()
+plt.savefig(f'figures/select-zoomed-tsne_{timestamp}.png')
 
 logging.info('t-SNE visualization for selected clusters completed.')
