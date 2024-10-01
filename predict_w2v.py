@@ -15,13 +15,10 @@ MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
 dataset = pd.read_feather(SRC_FOLDER + 'dataframe.feather')
 
-def retrieve_song_info(track_ids):
+def retrieve_track_info(track_ids):
     info = []
     info.append(dataset[dataset['track_id'] == tid] for tid in track_ids)
     return info
-
-        
-
 
 def mean_vectors(tracks, model):
     vec = []
@@ -127,7 +124,6 @@ def build_ground_truth(df):
     
     return pd.DataFrame(ground_truth, columns=['playlist_id', 'actual_track_ids'])
 
-
 def load_model(model_type):
     files = os.listdir(MDL_FOLDER)
 
@@ -174,9 +170,10 @@ def main(model_type, playlist_id=None, track_id=None):
         logging.info(f"Recommended tracks for playlist {playlist_id}: {recommendations}")
     elif track_id is not None:
         logging.info(f"Finding similar tracks for track ID: {track_id}")
-        retrieve_track_info(track_id)
+        logging.info(retrieve_track_info(track_id))
         similar_tracks = get_similar_tracks(model, track_id, top_n=10)
         logging.info(f"Similar tracks to {track_id}: {similar_tracks}")
+        logging.info(retrieve_track_info(similar_tracks))
     else:
         logging.error("Please provide either a playlist_id or a track_id for recommendations.")
         return
