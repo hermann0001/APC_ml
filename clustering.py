@@ -31,7 +31,6 @@ def spherical_kmeans(X, n_clusters, max_iter=300):
     
     logging.info(f'Finished Spherical K-Means with {n_clusters} clusters.')
     return kmeans.labels_
-
 def locate_optimal_elbow(x, y):
     logging.info('Calculating optimal elbow point.')
     
@@ -43,27 +42,38 @@ def locate_optimal_elbow(x, y):
     if not isinstance(y, pd.Series):
         y = pd.Series(y)
 
-    # Calculate the first derivative (differences)
-    first_derivative = np.diff(y)  # Change in y
+    # Normalize x and y for scale invariance
+    x_norm = (x - x.min()) / (x.max() - x.min())
+    y_norm = (y - y.min()) / (y.max() - y.min())
 
-    # Find the index of the maximum change in the first derivative
-    elbow_index = np.argmax(np.abs(np.diff(first_derivative))) + 1
+    # Coordinates of the first and last points
+    p1 = np.array([x_norm.iloc[0], y_norm.iloc[0]])
+    p2 = np.array([x_norm.iloc[-1], y_norm.iloc[-1]])
+
+    # Compute distances from each point to the line p1 -> p2
+    distances = []
+    for i in range(len(x_norm)):
+        p = np.array([x_norm.iloc[i], y_norm.iloc[i]])
+        distance = np.linalg.norm(np.cross(p2 - p1, p1 - p)) / np.linalg.norm(p2 - p1)
+        distances.append(distance)
+
+    # Find the index of the point with the maximum distance
+    elbow_index = np.argmax(distances)
 
     # Log the elbow point found
     logging.info(f'Optimal elbow point found at index: {elbow_index}')
     
     return elbow_index
 
-
 wcss = []  # List to hold Within-Cluster Sum of Squares (WCSS)
-for n_clusters in range(10, 501, 10):  # Iterate over number of clusters
+for n_clusters in range(10, 401, 10):  # Iterate over number of clusters
     logging.info(f'Calculating WCSS for {n_clusters} clusters.')
     labels = spherical_kmeans(embedding_matrix, n_clusters)
     # Calculate WCSS
     wcss.append(sum((np.linalg.norm(embedding_matrix[labels == i] - np.mean(embedding_matrix[labels == i], axis=0)))**2 for i in range(n_clusters)))
 
 # Create DataFrame to analyze WCSS
-skm_df = pd.DataFrame({'WCSS': wcss, 'n_clusters': range(10, 501, 10)})
+skm_df = pd.DataFrame({'WCSS': wcss, 'n_clusters': range(10, 401, 10)})
 
 # Locate optimal elbow
 k_opt = locate_optimal_elbow(skm_df['n_clusters'], skm_df['WCSS'])
@@ -72,7 +82,7 @@ skm_opt_labels = spherical_kmeans(embedding_matrix, k_opt)
 # After calculating WCSS
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 plt.figure(figsize=(10, 6))
-plt.plot(range(10, 501, 10), wcss, marker='o')
+plt.plot(range(10, 401, 10), wcss, marker='o')
 plt.title('Elbow Method for Optimal k')
 plt.xlabel('Number of clusters')
 plt.ylabel('Within-Cluster Sum of Squares (WCSS)')

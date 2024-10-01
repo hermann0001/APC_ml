@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import argparse
+import os
 import logging
 from gensim.models import Doc2Vec, Word2Vec
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
@@ -12,7 +13,24 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Constants
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
+dataset = pd.read_feather(SRC_FOLDER + 'dataframe.feather')
 
+def retrieve_track_info(track_ids):
+        # If track_ids is not a list, convert it into a list
+    if isinstance(track_ids, int):
+        track_ids = [track_ids]
+
+    # Search for each track_id in the DataFrame and print the results
+    for track_id in track_ids:
+        result = dataset[dataset['track_id'] == int(track_id)]
+
+        if not result.empty:
+            track_name = result['track_name'].values[0]
+            artist_name = result['artist_name'].values[0]
+            playlist_name = result['playlist_name'].values[0]
+            logging.info(f"Track ID: {track_id} | Track Name: {track_name} | Artist: {artist_name} | Playlist: {playlist_name}")
+        else:
+            logging.info(f"Track ID: {track_id} not found.")
 
 def mean_vectors(tracks, model):
     vec = []
@@ -118,12 +136,13 @@ def build_ground_truth(df):
     
     return pd.DataFrame(ground_truth, columns=['playlist_id', 'actual_track_ids'])
 
-
 def load_model(model_type):
+    files = os.listdir(MDL_FOLDER)
+
     if model_type == 'D2V':
         return Doc2Vec.load(MDL_FOLDER + 'd2v/d2v-trained-model.model')
     elif model_type == 'W2V':
-        return Word2Vec.load(MDL_FOLDER + 'w2v/w2v-trained-model.model')
+        return Word2Vec.load(MDL_FOLDER + 'w2v/w2v-trained-model-20241001_165715.model')
     else:
         raise ValueError("Invalid model type, use: 'W2V' or 'D2V'")
 
@@ -163,8 +182,10 @@ def main(model_type, playlist_id=None, track_id=None):
         logging.info(f"Recommended tracks for playlist {playlist_id}: {recommendations}")
     elif track_id is not None:
         logging.info(f"Finding similar tracks for track ID: {track_id}")
+        logging.info(retrieve_track_info(track_id))
         similar_tracks = get_similar_tracks(model, track_id, top_n=10)
         logging.info(f"Similar tracks to {track_id}: {similar_tracks}")
+        logging.info(retrieve_track_info(similar_tracks))
     else:
         logging.error("Please provide either a playlist_id or a track_id for recommendations.")
         return
@@ -185,8 +206,8 @@ def main(model_type, playlist_id=None, track_id=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Get recommendations for a playlist or similar tracks for a given track.')
     parser.add_argument('--use-model', type=str, required=True, choices=['W2V', 'D2V'], help='Specify the model to use: \'W2V\' or \'D2V\'')
-    parser.add_argument('--playlist-id', type=str, help='Specify a playlist ID to get recommendations')
-    parser.add_argument('--track-id', type=str, help='Specify a track ID to find similar tracks')
+    parser.add_argument('--playlist-id', type=int, help='Specify a playlist ID to get recommendations')
+    parser.add_argument('--track-id', type=int, help='Specify a track ID to find similar tracks')
 
     args = parser.parse_args()
     main(args.use_model, playlist_id=args.playlist_id, track_id=args.track_id)
