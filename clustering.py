@@ -11,12 +11,12 @@ from datetime import datetime
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
 
-model_timestamp = '20241001_182949'
+model_timestamp = '20241001_200151'
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Load Word2Vec model
-model = Word2Vec.load(MDL_FOLDER + f'w2v/w2v-trained-model_{model_timestamp}.model')
+model = Word2Vec.load(MDL_FOLDER + f'w2v/w2v-trained-model-{model_timestamp}.model')
 
 # Get the embedding matrix
 embedding_matrix = model.wv[model.wv.index_to_key]
