@@ -43,21 +43,15 @@ def locate_optimal_elbow(x, y):
     if not isinstance(y, pd.Series):
         y = pd.Series(y)
 
-    # Connect the first and last point of the curve with a straight line
-    line_start = (x[0], y[0])
-    line_end = (x.iloc[-1], y.iloc[-1])
-    
-    # Calculate distances from points to the line
-    distances = []
-    for i in range(len(y)):
-        numerator = abs((line_end[1] - line_start[1]) * x[i] - (line_end[0] - line_start[0]) * y[i] + 
-                        line_end[0] * line_start[1] - line_end[1] * line_start[0])
-        denominator = np.sqrt((line_end[1] - line_start[1]) ** 2 + (line_end[0] - line_start[0]) ** 2)
-        distances.append(numerator / denominator if denominator != 0 else 0)
+    # Calculate the first derivative (differences)
+    first_derivative = np.diff(y)  # Change in y
 
-    # The index of the maximum distance corresponds to the elbow point
-    elbow_index = np.argmax(distances)
+    # Find the index of the maximum change in the first derivative
+    elbow_index = np.argmax(np.abs(np.diff(first_derivative))) + 1
+
+    # Log the elbow point found
     logging.info(f'Optimal elbow point found at index: {elbow_index}')
+    
     return elbow_index
 
 
@@ -93,7 +87,7 @@ songs_cluster['cluster'] = songs_cluster['cluster'].fillna(-1).astype(int).astyp
 
 # Visualization using t-SNE
 logging.info('Performing t-SNE visualization...')
-embedding_tsne_full = cuTSNE(n_components=2, metric='cosine', random_state=123).fit_transform(embedding_matrix)
+embedding_tsne_full = cuTSNE(n_components=2, perplexity=30, n_iter=1000,metric='cosine', random_state=123).fit_transform(embedding_matrix)
 
 # Prepare DataFrame for plotting
 tsne_df_full = pd.DataFrame(embedding_tsne_full, columns=['x', 'y'])
@@ -122,7 +116,7 @@ filtered_indices = songs_cluster[songs_cluster['cluster'].isin(selected_clusters
 filtered_embeddings = embedding_matrix[[model.wv.key_to_index[key] for key in filtered_indices]]
 
 # Perform t-SNE on the filtered embeddings
-embedding_tsne_filtered = cuTSNE(n_components=2, metric='cosine', random_state=123).fit_transform(filtered_embeddings)
+embedding_tsne_filtered = cuTSNE(n_components=2,perplexity=30, n_iter=1000, metric='cosine', random_state=123).fit_transform(filtered_embeddings)
 
 # Prepare DataFrame for plotting
 tsne_df_filtered = pd.DataFrame(embedding_tsne_filtered, columns=['x', 'y'])
