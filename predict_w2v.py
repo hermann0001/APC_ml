@@ -16,9 +16,21 @@ SRC_FOLDER = 'formatted/dataset/'
 dataset = pd.read_feather(SRC_FOLDER + 'dataframe.feather')
 
 def retrieve_track_info(track_ids):
-    info = []
-    info.append(dataset[dataset['track_id'] == tid] for tid in track_ids)
-    return info
+        # If track_ids is not a list, convert it into a list
+    if isinstance(track_ids, int):
+        track_ids = [track_ids]
+
+    # Search for each track_id in the DataFrame and print the results
+    for track_id in track_ids:
+        result = dataset[dataset['track_id'] == track_id]
+
+        if not result.empty:
+            track_name = result['track_name'].values[0]
+            artist_name = result['artist_name'].values[0]
+            playlist_name = result['playlist_name'].values[0]
+            logging.info(f"Track ID: {track_id} | Track Name: {track_name} | Artist: {artist_name} | Playlist: {playlist_name}")
+        else:
+            logging.info(f"Track ID: {track_id} not found.")
 
 def mean_vectors(tracks, model):
     vec = []
