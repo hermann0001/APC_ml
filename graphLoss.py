@@ -25,3 +25,4 @@ ax.set_xlabel('Epochs')  # Etichetta asse X
 ax.set_ylabel('Loss')    # Etichetta asse Y
 #plt.show()
 plt.savefig('figures/w2v_loss_plot-20241001_021349.png')
+print("printed")
