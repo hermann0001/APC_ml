@@ -66,9 +66,7 @@ plt.savefig(f'figures/elbow_method_{timestamp}.png')
 
 # Locate optimal elbow
 k_opt = locate_optimal_elbow(km_df.index, km_df['WCSS'].values)
-
-#k_opt = 100
-km_opt_labels, _, _ = km_df.loc[k_opt, 'km_object']
+km_opt = km_df.loc[k_opt, 'km_object']
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 km_df.WCSS.plot()
@@ -81,9 +79,9 @@ plt.savefig(f'figures/elbow_method_{timestamp}.png')
 
 songs = pd.read_feather(SRC_FOLDER + 'dataframe.feather')
 songs.drop_duplicates(subset=['track_id'], inplace=True)
-print(songs.head())
+songs.set_index('track_id', inplace=True)
 
-songs.loc[model.wv.index_to_key, 'cluster'] = km_opt_labels
+songs.loc[model.wv.index_to_key, 'cluster'] = k_opt.labels_
 songs['cluster'] = songs['cluster'].fillna(-1).astype(int).astype('category')
 
 # Visualization using t-SNE
