@@ -5,13 +5,31 @@ from cuml.manifold import TSNE as cuTSNE
 import matplotlib.pyplot as plt
 import seaborn as sns
 from gensim.models import Word2Vec
-import logging
 from datetime import datetime
+from sklearn.preprocessing import normalize
+import logging
+import math
+import tqdm
+import random
 
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
+model_timestamp = '20241002_021349'
 
-model_timestamp = '20241001_200151'
+def locate_optimal_elbow(x, y):
+    # START AND FINAL POINTS
+    p1 = (x[0], y[0])
+    p2 = (x[-1], y[-1])
+    
+    # EQUATION OF LINE: y = mx + c
+    m = (p2[1] - p1[1]) / (p2[0] - p1[0])
+    c = (p2[1] - (m * p2[0]))
+    
+    # DISTANCE FROM EACH POINTS TO LINE mx - y + c = 0
+    a, b = m, -1
+    dist = np.array([abs(a*x0+b*y0+c)/math.sqrt(a**2+b**2) for x0, y0 in zip(x,y)])
+    return x[np.argmax(dist)]
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -23,101 +41,63 @@ embedding_matrix = model.wv[model.wv.index_to_key]
 logging.info(f'Embedding matrix shape: {embedding_matrix.shape}')
 
 
-def spherical_kmeans(X, n_clusters, max_iter=300):
-    logging.info(f'Starting Spherical K-Means with {n_clusters} clusters.')
+range_k_clusters = (10, 500)
+km_list = []
+for k in tqdm(range(*range_k_clusters, 10)):
+    normalized_embedding_matrix = normalize(embedding_matrix)
+
+    km = cuKMeans(n_clusters = k, n_init = 5, random_state = 666).fit(normalized_embedding_matrix)
     
-    # Normalize the data
-    X_normalized = X / np.linalg.norm(X, axis=1, keepdims=True)
+    result_dict = {
+        "k": k,
+        "WCSS": km.inertia_,
+        "km_object": km
+    }
     
-    # Initialize KMeans with spherical data
-    kmeans = cuKMeans(n_clusters=n_clusters, init='k-means++', max_iter=max_iter)
-    kmeans.fit(X_normalized)
-    
-    logging.info(f'Finished Spherical K-Means with {n_clusters} clusters.')
-    return kmeans.labels_, kmeans.cluster_centers_, kmeans.inertia_
+    km_list.append(result_dict)
+km_df = pd.DataFrame(km_list).set_index('k')
 
-
-def locate_optimal_elbow(x, y):
-    logging.info('Calculating optimal elbow point.')
-    
-    if x.empty or y.empty:
-        raise ValueError("Input Series cannot be empty")
-
-    if not isinstance(x, pd.Series):
-        x = pd.Series(x)
-    if not isinstance(y, pd.Series):
-        y = pd.Series(y)
-
-    # Normalize x and y for scale invariance
-    x_norm = (x - x.min()) / (x.max() - x.min())
-    y_norm = (y - y.min()) / (y.max() - y.min())
-
-    # Coordinates of the first and last points
-    p1 = np.array([x_norm.iloc[0], y_norm.iloc[0]])
-    p2 = np.array([x_norm.iloc[-1], y_norm.iloc[-1]])
-
-    # Compute distances from each point to the line p1 -> p2
-    distances = []
-    for i in range(len(x_norm)):
-        p = np.array([x_norm.iloc[i], y_norm.iloc[i]])
-        distance = np.linalg.norm(np.cross(p2 - p1, p1 - p)) / np.linalg.norm(p2 - p1)
-        distances.append(distance)
-
-    # Find the index of the point with the maximum distance
-    elbow_index = np.argmax(distances)
-
-    # Log the elbow point found
-    logging.info(f'Optimal elbow point found at index: {elbow_index}')
-    
-    return elbow_index
-
-# Calculate Within-Cluster Sum of Squares (WCSS)
-
-wcss = []  # List to hold Within-Cluster Sum of Squares (WCSS)
-for n_clusters in range(10, 401, 10):  # Iterate over number of clusters
-    logging.info(f'Calculating WCSS for {n_clusters} clusters.')
-    labels, centers, inertia = spherical_kmeans(embedding_matrix, n_clusters)
-    wcss.append(inertia)  # Inertia is equivalent to WCSS
-
-# Create DataFrame to analyze WCSS
-skm_df = pd.DataFrame({'WCSS': wcss, 'n_clusters': range(10, 401, 10)})
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+km_df.WCSS.plot()
+plt.xlabel("No. of Clusters")
+plt.ylabel("WCSS")
+plt.title("Elbow Method", fontweight = "bold")
+plt.savefig(f'figures/elbow_method_{timestamp}.png')
 
 # Locate optimal elbow
-#k_opt = locate_optimal_elbow(skm_df['n_clusters'], skm_df['WCSS'])
-k_opt = 100
-skm_opt_labels, _, _ = spherical_kmeans(embedding_matrix, k_opt)
+k_opt = locate_optimal_elbow(km_df.index, km_df['WCSS'].values)
 
-# Plot Elbow Method
+#k_opt = 100
+km_opt_labels, _, _ = km_df.loc[k_opt, 'km_object']
+
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-plt.figure(figsize=(10, 6))
-plt.plot(range(10, 401, 10), wcss, marker='o')
-plt.title('Elbow Method for Optimal k')
-plt.xlabel('Number of clusters')
-plt.ylabel('Within-Cluster Sum of Squares (WCSS)')
+km_df.WCSS.plot()
+plt.xlabel("No. of Clusters")
+plt.ylabel("WCSS")
+plt.title("Elbow Method", fontweight = "bold")
 plt.axvline(x=k_opt, linestyle='--', color='red', label='Optimal k')
 plt.legend()
 plt.savefig(f'figures/elbow_method_{timestamp}.png')
 
-# Prepare the DataFrame for songs with their clusters
-songs_cluster = pd.DataFrame(index=model.wv.index_to_key, columns=['cluster'])
-songs_cluster['cluster'] = skm_opt_labels
-songs_cluster['cluster'] = songs_cluster['cluster'].fillna(-1).astype(int).astype('category')
+songs = pd.read_feather(SRC_FOLDER + 'dataframe.feather')
+songs.drop_duplicates(subset=['track_id'], inplace=True)
+print(songs.head())
+
+songs.loc[model.wv.index_to_key, 'cluster'] = km_opt_labels
+songs['cluster'] = songs['cluster'].fillna(-1).astype(int).astype('category')
 
 # Visualization using t-SNE
 logging.info('Performing t-SNE visualization...')
-embedding_tsne_full = cuTSNE(n_components=2, perplexity=30, n_iter=1000, metric='cosine', random_state=123).fit_transform(embedding_matrix)
+embedding_tsne_full = cuTSNE(n_components=2, metric='cosine', random_state=666).fit_transform(embedding_matrix)
 
 # Prepare DataFrame for plotting
-tsne_df_full = pd.DataFrame(embedding_tsne_full, columns=['x', 'y'])
-tsne_df_full['cluster'] = songs_cluster['cluster'].values
+songs.loc[model.wv.index_to_key, 'x'] = embedding_tsne_full[:,0]
+songs.loc[model.wv.index_to_key, '1'] = embedding_tsne_full[:,1]
 
 # Plotting full t-SNE visualization
 plt.figure(figsize=(12, 8))
-sns.scatterplot(data=tsne_df_full, x='x', y='y', hue='cluster', palette='viridis', legend='full', alpha=0.7)
-plt.title('t-SNE Visualization of All Song Clusters')
-plt.xlabel('t-SNE Component 1')
-plt.ylabel('t-SNE Component 2')
-plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+sns.scatterplot(data=songs[songs['cluster'] != -1], x='x', y='y', hue='cluster', palette='viridis', legend=False)
+plt.title(f't-SNE Visualization of {k_opt} Song Clusters', fontweight='bold')
 plt.savefig(f'figures/full-tsne_{timestamp}.png')
 
 logging.info('Full t-SNE visualization completed.')
@@ -126,34 +106,17 @@ logging.info('Full t-SNE visualization completed.')
 logging.info('Performing t-SNE visualization on a random subset of clusters...')
 
 # Randomly select 10 unique clusters
-unique_clusters = songs_cluster['cluster'].cat.categories
-selected_clusters = np.random.choice(unique_clusters[unique_clusters != -1], size=10, replace=False)
+random.seed(100)
+random_cluster2plot = random.sample(range(k_opt), 10)
+random_songs = songs[songs.cluster.isin(random_cluster2plot)].copy()
+random_tsne = cuTSNE(n_components = 2, metric = 'cosine', random_state = 100).fit_transform(model.wv[random_songs.index])
+random_songs.loc[random_songs.index, 'x'] = random_tsne[:,0]
+random_songs.loc[random_songs.index, 'y'] = random_tsne[:,1]
 
-# Filter embeddings for the selected clusters
-filtered_indices = songs_cluster[songs_cluster['cluster'].isin(selected_clusters)].index
-filtered_embeddings = embedding_matrix[[model.wv.key_to_index[key] for key in filtered_indices]]
-
-# Perform t-SNE on the filtered embeddings
-embedding_tsne_filtered = cuTSNE(n_components=2, perplexity=30, n_iter=1000, metric='cosine', random_state=123).fit_transform(filtered_embeddings)
-
-# Prepare DataFrame for plotting
-tsne_df_filtered = pd.DataFrame(embedding_tsne_filtered, columns=['x', 'y'])
-tsne_df_filtered['cluster'] = songs_cluster.loc[filtered_indices, 'cluster'].values
-
-# Plotting
 plt.figure(figsize=(12, 8))
-sns.scatterplot(data=tsne_df_filtered, x='x', y='y', hue='cluster', palette='viridis', legend='full', alpha=0.7)
-plt.title('t-SNE Visualization of Selected Song Clusters')
-plt.xlabel('t-SNE Component 1')
-plt.ylabel('t-SNE Component 2')
-plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+g = sns.scatterplot(data = random_songs,
+                x = 'x', y = 'y', palette = "viridis",
+                hue = 'cluster')
+g.legend(loc = "upper left", bbox_to_anchor = (1, 1))
+g.set_title(f"Randomly selected {len(random_cluster2plot)} Song Clusters", fontweight = "bold")
 plt.savefig(f'figures/selected-tsne_{timestamp}.png')
-
-# Zoomed-in plot for specific t-SNE ranges
-subset = tsne_df_filtered[(tsne_df_filtered['x'] > -1000) & (tsne_df_filtered['x'] < 1000)]
-
-plt.scatter(subset['x'], subset['y'], c=subset['cluster'].cat.codes, cmap='tab10')
-plt.title("Zoomed-in t-SNE Selected Visualization")
-plt.savefig(f'figures/select-zoomed-tsne_{timestamp}.png')
-
-logging.info('t-SNE visualization for selected clusters completed.')

@@ -4,9 +4,10 @@ import gc
 from MetaSpotifyDataExtractor import get_spotify_metadata
 import logging
 from sklearn.model_selection import train_test_split
+import pickle
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-SAMPLE_SIZE = 100000 # no. of rows loaded (total = 1M)
+SAMPLE_SIZE = 50000 # no. of rows loaded (total = 1M)
 SRC_FOLDER = "formatted/dataset/"
 PLAYLIST_CSV = SRC_FOLDER + "playlists.csv"
 TRACK_CSV = SRC_FOLDER + "tracks.csv"
@@ -92,15 +93,16 @@ dataframe.to_feather('formatted/dataset/dataframe.feather')
 
 logging.info("Splitting train and test set...")
 
-playlist_documents = dataframe.groupby('playlist_id').agg(
-    {
-        'track_id': lambda x: list(x),
-        'artist_id': lambda x: list(x),
-        'pos': lambda x: list(x)
-    }
-).reset_index()
+playlists = []
+for playlist_id, group in dataframe.groupby('playlist_id'):
+  tracks = group['track_id'].values.tolist()
+  playlists.append(tracks)
 
-train, test = train_test_split(playlist_documents, test_size=0.2, random_state=666)
+clean_playlists = [p for p in playlists if len(p) > 1]
+logging.info(f"Playlist with at least 1 song: {len(clean_playlists)}")
 
-train.to_feather(SRC_FOLDER + "train.feather")
-test.to_feather(SRC_FOLDER + "test.feather")
+train, test = train_test_split(clean_playlists, test_size=1000, shuffle=True, random_state=666)
+
+with open(SRC_FOLDER + 'train.pkl', 'wb') as train_f, open(SRC_FOLDER + 'test.pkl', 'wb') as test_f:
+    pickle.dump(train, train_f)
+    pickle.dump(test, test_f)

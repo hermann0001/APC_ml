@@ -4,12 +4,11 @@ import multiprocessing
 import logging
 from utils import LossLogger
 from datetime import datetime  # Importing datetime
+import pickle
 
 
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
-
-train_playlists = pd.read_feather(SRC_FOLDER + 'train.feather')
 
 # Set up logging
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')  # Format: YYYYMMDD_HHMMSS
@@ -23,17 +22,10 @@ stream_handler.setFormatter(logging.Formatter('%(asctime)s : %(levelname)s : %(m
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
-train_data = []
-for _, row in train_playlists.iterrows():
-    words = [f"{track}" for track in row['track_id']]
-    train_data.append(words)
+with open(SRC_FOLDER + 'train.pkl', 'rb') as file:
+    train_data = pickle.load(file)
 
-logger.info("Loaded train data...")
-
-#####################################
-############ TRAINING ###############
-#####################################
-
+print(len(train_data))
 # Train Word2Vec model
 model = Word2Vec(vector_size=300, window=5, min_count=5, workers=multiprocessing.cpu_count(), epochs=500, sg=0, negative=5, alpha=0.05)
 model.build_vocab(train_data)
