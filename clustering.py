@@ -9,12 +9,12 @@ from datetime import datetime
 from sklearn.preprocessing import normalize
 import logging
 import math
-import tqdm
+from tqdm import tqdm
 import random
 
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
-model_timestamp = '20241002_021349'
+model_timestamp = '20241002_032052'
 
 def locate_optimal_elbow(x, y):
     # START AND FINAL POINTS
@@ -67,6 +67,7 @@ plt.savefig(f'figures/elbow_method_{timestamp}.png')
 # Locate optimal elbow
 k_opt = locate_optimal_elbow(km_df.index, km_df['WCSS'].values)
 km_opt = km_df.loc[k_opt, 'km_object']
+logging.info(f"Optimal # of cluster:{k_opt}")
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 km_df.WCSS.plot()
@@ -81,16 +82,16 @@ songs = pd.read_feather(SRC_FOLDER + 'dataframe.feather')
 songs.drop_duplicates(subset=['track_id'], inplace=True)
 songs.set_index('track_id', inplace=True)
 
-songs.loc[model.wv.index_to_key, 'cluster'] = k_opt.labels_
+songs.loc[model.wv.index_to_key, 'cluster'] = km_opt.labels_
 songs['cluster'] = songs['cluster'].fillna(-1).astype(int).astype('category')
 
 # Visualization using t-SNE
 logging.info('Performing t-SNE visualization...')
-embedding_tsne_full = cuTSNE(n_components=2, metric='cosine', random_state=666).fit_transform(embedding_matrix)
+embedding_tsne_full = cuTSNE(n_components=2, perplexity=k_opt//3, metric='cosine', random_state=666).fit_transform(embedding_matrix)
 
 # Prepare DataFrame for plotting
 songs.loc[model.wv.index_to_key, 'x'] = embedding_tsne_full[:,0]
-songs.loc[model.wv.index_to_key, '1'] = embedding_tsne_full[:,1]
+songs.loc[model.wv.index_to_key, 'y'] = embedding_tsne_full[:,1]
 
 # Plotting full t-SNE visualization
 plt.figure(figsize=(12, 8))
@@ -107,7 +108,7 @@ logging.info('Performing t-SNE visualization on a random subset of clusters...')
 random.seed(100)
 random_cluster2plot = random.sample(range(k_opt), 10)
 random_songs = songs[songs.cluster.isin(random_cluster2plot)].copy()
-random_tsne = cuTSNE(n_components = 2, metric = 'cosine', random_state = 100).fit_transform(model.wv[random_songs.index])
+random_tsne = cuTSNE(n_components = 2, perplexity=k_opt//3, metric = 'cosine', random_state = 100).fit_transform(model.wv[random_songs.index])
 random_songs.loc[random_songs.index, 'x'] = random_tsne[:,0]
 random_songs.loc[random_songs.index, 'y'] = random_tsne[:,1]
 
