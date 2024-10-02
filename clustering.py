@@ -41,7 +41,7 @@ embedding_matrix = model.wv[model.wv.index_to_key]
 logging.info(f'Embedding matrix shape: {embedding_matrix.shape}')
 
 
-range_k_clusters = (10, 500)
+range_k_clusters = (10, 501)
 km_list = []
 for k in tqdm(range(*range_k_clusters, 10)):
     normalized_embedding_matrix = normalize(embedding_matrix)
@@ -57,26 +57,19 @@ for k in tqdm(range(*range_k_clusters, 10)):
     km_list.append(result_dict)
 km_df = pd.DataFrame(km_list).set_index('k')
 
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-km_df.WCSS.plot()
-plt.xlabel("No. of Clusters")
-plt.ylabel("WCSS")
-plt.title("Elbow Method", fontweight = "bold")
-plt.savefig(f'figures/elbow_method_{timestamp}.png')
-
 # Locate optimal elbow
 k_opt = locate_optimal_elbow(km_df.index, km_df['WCSS'].values)
 km_opt = km_df.loc[k_opt, 'km_object']
 logging.info(f"Optimal # of cluster:{k_opt}")
 
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-km_df.WCSS.plot()
+plt.figure(figsize=(10,6))
+plt.plot(range(10,501,10), km_df['WCSS'].values, marker='o')
 plt.xlabel("No. of Clusters")
 plt.ylabel("WCSS")
 plt.title("Elbow Method", fontweight = "bold")
 plt.axvline(x=k_opt, linestyle='--', color='red', label='Optimal k')
 plt.legend()
-plt.savefig(f'figures/elbow_method_{timestamp}.png')
+plt.savefig(f'figures/elbow_method_{model_timestamp}.png')
 
 songs = pd.read_feather(SRC_FOLDER + 'dataframe.feather')
 songs.drop_duplicates(subset=['track_id'], inplace=True)
@@ -97,7 +90,7 @@ songs.loc[model.wv.index_to_key, 'y'] = embedding_tsne_full[:,1]
 plt.figure(figsize=(12, 8))
 sns.scatterplot(data=songs[songs['cluster'] != -1], x='x', y='y', hue='cluster', palette='viridis', legend=False)
 plt.title(f't-SNE Visualization of {k_opt} Song Clusters', fontweight='bold')
-plt.savefig(f'figures/full-tsne_{timestamp}.png')
+plt.savefig(f'figures/full-tsne_{model_timestamp}.png')
 
 logging.info('Full t-SNE visualization completed.')
 
@@ -116,6 +109,5 @@ plt.figure(figsize=(12, 8))
 g = sns.scatterplot(data = random_songs,
                 x = 'x', y = 'y', palette = "viridis",
                 hue = 'cluster')
-g.legend(loc = "upper left", bbox_to_anchor = (1, 1))
 g.set_title(f"Randomly selected {len(random_cluster2plot)} Song Clusters", fontweight = "bold")
-plt.savefig(f'figures/selected-tsne_{timestamp}.png')
+plt.savefig(f'figures/selected-tsne_{model_timestamp}.png')

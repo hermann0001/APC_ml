@@ -5,7 +5,7 @@ import logging
 from utils import LossLogger
 from datetime import datetime  # Importing datetime
 import pickle
-
+import matplotlib.pyplot as plt
 
 MDL_FOLDER = 'models/'
 SRC_FOLDER = 'formatted/dataset/'
@@ -35,3 +35,19 @@ model.train(train_data, total_examples=model.corpus_count, epochs=model.epochs, 
 
 model.save(MDL_FOLDER + f'w2v/w2v-trained-model-{timestamp}.model')
 logger.info("Model trained and saved")
+
+#questo po essere sostituito dalla lettura di un file
+log_data = loss_logger.losses
+
+epochs = list(log_data.keys())
+losses = list(log_data.values())
+
+# Creazione del grafico
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(epochs, losses, marker='o', linestyle='-', color='b')
+fig.suptitle(r'Loss function per $\alpha = 0.05$', fontsize=14, fontweight='bold') # Titolo con la lettera greca alpha
+ax.grid(True)
+ax.set_xticks(range(0, 501, 25)) 
+ax.set_xlabel('Epochs')  # Etichetta asse X
+ax.set_ylabel('Loss')    # Etichetta asse Y
+plt.savefig(f'figures/w2v_loss_plot-{timestamp}.png')
