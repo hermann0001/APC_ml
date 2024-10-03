@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 import pickle
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-SAMPLE_SIZE = 50000 # no. of rows loaded (total = 1M)
+SAMPLE_SIZE = 100000 # no. of rows loaded (total = 1M)
 SRC_FOLDER = "formatted/dataset/"
 PLAYLIST_CSV = SRC_FOLDER + "playlists.csv"
 TRACK_CSV = SRC_FOLDER + "tracks.csv"

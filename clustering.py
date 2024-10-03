@@ -106,8 +106,6 @@ random_songs.loc[random_songs.index, 'x'] = random_tsne[:,0]
 random_songs.loc[random_songs.index, 'y'] = random_tsne[:,1]
 
 plt.figure(figsize=(12, 8))
-g = sns.scatterplot(data = random_songs,
-                x = 'x', y = 'y', palette = "viridis",
-                hue = 'cluster')
+g = sns.scatterplot(data = random_songs, x = 'x', y = 'y', palette = "viridis",hue = 'cluster')
 g.set_title(f"Randomly selected {len(random_cluster2plot)} Song Clusters", fontweight = "bold")
 plt.savefig(f'figures/selected-tsne_{model_timestamp}.png')
