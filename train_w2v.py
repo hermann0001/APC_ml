@@ -43,11 +43,17 @@ epochs = list(log_data.keys())
 losses = list(log_data.values())
 
 # Creazione del grafico
+log_data = loss_logger.losses
+
+epochs = list(log_data.keys())
+losses = list(log_data.values())
+
+# Creazione del grafico
 fig, ax = plt.subplots(figsize=(10, 6))
 ax.plot(epochs, losses, marker='o', linestyle='-', color='b')
-fig.suptitle(r'Loss function per $\alpha = 0.05$', fontsize=14, fontweight='bold') # Titolo con la lettera greca alpha
+fig.suptitle(rf'Loss function per $\alpha = {model.alpha}$', fontsize=14, fontweight='bold') # Titolo con la lettera greca alpha
 ax.grid(True)
-ax.set_xticks(range(0, 501, 25)) 
+ax.set_xticks(range(0, model.epochs, 25)) 
 ax.set_xlabel('Epochs')  # Etichetta asse X
 ax.set_ylabel('Loss')    # Etichetta asse Y
 plt.savefig(f'figures/w2v_loss_plot-{timestamp}.png')
