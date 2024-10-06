@@ -19,49 +19,28 @@ pip3 install -r requirements.txt
 * Esegui `setup.sh` per creare la struttura delle directory necessaria.
 
 ```text
-📦Project
- ┣ 📂challenge_set
- ┣ 📂dataset
+📦APC_ML
  ┣ 📂figures
  ┣ 📂formatted
- ┃ ┣ 📂challenge_set
  ┃ ┗ 📂dataset
+ ┣ 📂models
+ ┃ ┗ 📂w2v
  ┣ 📜MetaSpotifyDataExtractor.py
- ┣ 📜README.MD
- ┣ 📜preprocess.py
+ ┣ 📜predict_w2v.ipynb
+ ┣ 📜predict_w2v.py
+ ┣ 📜preprocess_dataset.py
  ┣ 📜read_dataset.py
- ┣ 📜read_testdata.py
  ┣ 📜requirements.txt
- ┣ 📜setup.sh
- ┣ 📜stats.py
- ┣ 📜train_test.py
+ ┣ 📜song2vec.ipynb
+ ┣ 📜stats.ipynb
+ ┣ 📜train_w2v.ipynb
  ┗ 📜utils.py
 ```
 
 * **dataset** è la cartella destinata a contenere il dataset estratto direttamente dentro di essa.
-* **challenge_set** è la cartella destinata a contenere il dataset di test fornito dalla challenge, anch'esso da estrarre direttamente dentro la cartella.
 * **figures** contiene vari grafici o qualsiasi file `.png` generato dal codice.
 * **formatted** contiene i vari dataset convertiti e allegeriti in file `.csv` generati e preprocessati dal codice python.
-
-## Lettura e preprocessamento dei dati
-
-Una volta inclusi i vari dataset nelle rispettivi cartelle gli script vanno eseguiti in questo ordine:
-
-1. `read_dataset.py`
-2. `read_testdata.py`
-3. _work in progress :P_
-
-I primi due script renderanno disponibili i seguenti file `.csv`:
-
-* `formatted/`
-  * `challenge_set/`
-    * `playlist_track.csv`
-    * `playlists.csv`
-  * `dataset/`
-    * `artists.csv`
-    * `playlists.csv`
-    * `tracks.csv`
-    * `playlist_track.csv`
+* **models** conteine i modelli addestrati da Word2Vec
 
 ### Struttura dei dati
 
