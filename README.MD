@@ -1,4 +1,4 @@
-# Automatic Music Playlist Continuator
+# Automatic Spotify Playlist Continuator
 
 Codice python per addestrare un modello di Machine Learning sul dataset reso disponibile dalla RecSys Challenge 2018 contenente un milione di playlist. \
 Info: [C.W. Chen, P. Lamere, M. Schedl, and H. Zamani. Recsys Challenge 2018: Automatic Music Playlist Continuation. In Proceedings of the 12th ACM Conference on Recommender Systems (RecSys ’18), 2018.](https://dl.acm.org/doi/abs/10.1145/3240323.3240342)
