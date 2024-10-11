@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+title: "APC_ml"
+version: "1.0.0"
+doi: ""
+authors:
+  - family-names: "Tamilia"
+    given-names: "Hermann"
+  - family-names: "Lontano"
+    given-names: "Irene"
+  - family-names: "Vitale"
+    given-names: "Matteo"
+date-released: "2024-10-11"
+url: "https://github.com/hermann0001/APC_ml"
+repository-code: "https://github.com/hermann0001/APC_ml"
